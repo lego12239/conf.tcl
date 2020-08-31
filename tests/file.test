@@ -1,0 +1,26 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test file-1.0 {
+	read conf from a missing file
+} -body {
+	conf::load_from_file non-existent.conf
+} -returnCodes error -result "couldn't open \"non-existent.conf\": no such file or directory"
+
+tcltest::test file-2.0 {
+	read conf from a file
+} -body {
+	conf::load_from_file -hd . test.conf
+} -result {k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4} k5 v5}
+
+tcltest::test file-3.0 {
+	read conf from a file handler
+} -body {
+	set fh [open test.conf]
+	set conf [conf::load_from_fh -hd . $fh]
+	close $fh
+	return $conf
+} -result {k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4} k5 v5}
+
+tcltest::cleanupTests

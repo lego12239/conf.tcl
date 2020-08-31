@@ -1,0 +1,75 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test ini-1.0 {
+	parameter without a group
+} -body {
+	conf::load_from_str "k=v"
+} -result {k v}
+
+tcltest::test ini-2.0 {
+	parameter without a group and with a group
+} -body {
+	conf::load_from_str "k=v
+	\[grp.one\]
+	k=v"
+} -result {k v grp.one {k v}}
+
+tcltest::test ini-2.1 {
+	parameter without a group and with a group
+} -body {
+	conf::load_from_str "k=v
+	\[grp.one\]
+	k1=v1"
+} -result {k v grp.one {k1 v1}}
+
+tcltest::test ini-2.2 {
+	parameter without a group and with a group
+} -body {
+	conf::load_from_str "k=v
+	k1=v1
+	\[grp.one\]
+	k2=v2
+	k3=v3
+	\[grp-two\]
+	k4=v4"
+} -result {k v k1 v1 grp.one {k2 v2 k3 v3} grp-two {k4 v4}}
+
+tcltest::test ini-3.0 {
+	parameter without a group and with a group(with hd)
+} -body {
+	conf::load_from_str -hd / "k=v
+	k1=v1
+	\[grp.one\]
+	k2=v2
+	k3=v3
+	\[grp-two\]
+	k4=v4"
+} -result {k v k1 v1 grp.one {k2 v2 k3 v3} grp-two {k4 v4}}
+
+tcltest::test ini-3.1 {
+	parameter without a group and with a group(with hd)
+} -body {
+	conf::load_from_str -hd . "k=v
+	k1=v1
+	\[grp.one\]
+	k2=v2
+	k3=v3
+	\[grp-two\]
+	k4=v4"
+} -result {k v k1 v1 grp {one {k2 v2 k3 v3}} grp-two {k4 v4}}
+
+tcltest::test ini-3.2 {
+	parameter without a group and with a group(with hd)
+} -body {
+	conf::load_from_str -hd . "k=v
+	grp.one.k1=vv
+	\[grp.one\]
+	k2=v2
+	k3.g=v3
+	\[grp-two\]
+	k4.q=v4"
+} -result {k v grp {one {k1 vv k2 v2 k3 {g v3}}} grp-two {k4 {q v4}}}
+
+tcltest::cleanupTests

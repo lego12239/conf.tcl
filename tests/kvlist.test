@@ -1,0 +1,29 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test kvlist-1.0 {
+	simple key list-value pair
+} -body {
+	conf::load_from_str "k1=v1
+	k1 = \{1 2 \{3\}\}"
+} -result "k1 {1 2 3}"
+
+tcltest::test kvlist-1.1 {
+	simple key list-value pair
+} -body {
+	conf::load_from_str "k1=v1
+	k1 = \{1 2 \{3 4\}\}"
+} -result "k1 {1 2 {3 4}}"
+
+tcltest::test kvlist-1.2 {
+	simple key list-value pair
+} -body {
+	conf::load_from_str "k1=v1
+	k1 = \{1
+	2
+	\{3
+	4\}\}"
+} -result "k1 {1 2 {3 4}}"
+
+tcltest::cleanupTests

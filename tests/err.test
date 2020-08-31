@@ -1,0 +1,40 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test err-1.0 {
+	multiline quoted val(missed quotes)
+} -body {
+	conf::load_from_str "k=\n\n\n\"v1"
+} -returnCodes error -result "parse error at 4 line: unexpected token sequence at 1 line: 'k'#6(L1) '='#1(L1)
+ want: KEY = VAL or KEY = \{ or GROUP_NAME \{ or \} or \[GROUP_NAME\]
+possible unclosed quotes at 4 line"
+
+tcltest::test err-2.0 {
+	too many non parameter arguments
+} -body {
+	conf::load_from_str "k=v1" "excessive=data_source"
+} -returnCodes error -result {unknown parameter: k=v1}
+
+tcltest::test err-2.1 {
+	wrong option name
+} -body {
+	conf::load_from_str -wrong_parameter 1 "k=v1"
+} -returnCodes error -result {unknown parameter: -wrong_parameter}
+
+tcltest::test err-3.0 {
+	try to replace a parameter with a group
+} -body {
+	conf::load_from_str -hd . "
+	k=v
+	k.a=v1"
+} -returnCodes error -result {missing value to go with key(conf lines: from 3 to 3)}
+
+tcltest::test err-4.0 {
+	read conf from a file with err
+} -body {
+	conf::load_from_file -hd . test.err.conf
+} -returnCodes error -result "parse error at 9 line: unexpected token sequence at 8 line: 'k4'#6(L8) '='#1(L8) '}'#3(L9)
+ want: KEY = VAL or KEY = \{ or GROUP_NAME \{ or \} or \[GROUP_NAME\]"
+
+tcltest::cleanupTests

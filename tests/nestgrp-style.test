@@ -1,0 +1,61 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test nestgrp-1.0 {
+	parameter without a group
+} -body {
+	conf::load_from_str "k=v"
+} -result {k v}
+
+tcltest::test nestgrp-2.0 {
+	parameter without a group and with a group
+} -body {
+	conf::load_from_str "k=v
+	grp.one\{
+	k=v\}"
+} -result {k v grp.one {k v}}
+
+tcltest::test nestgrp-2.1 {
+	parameter without a group and with a group(with hd)
+} -body {
+	conf::load_from_str -hd . "k=v
+	grp.one\{
+	k=v\}"
+} -result {k v grp {one {k v}}}
+
+tcltest::test nestgrp-3.0 {
+	parameter within a nested group
+} -body {
+	conf::load_from_str "k=v
+	grp.one\{
+	k=v
+	another.grp \{
+	k=v\}\}"
+} -result {k v grp.one {k v another.grp {k v}}}
+
+tcltest::test nestgrp-3.1 {
+	parameter within a nested group(with hd)
+} -body {
+	conf::load_from_str -hd . "k=v
+	grp.one\{
+	k=v
+	another.grp \{
+	k=v\}\}"
+} -result {k v grp {one {k v another {grp {k v}}}}}
+
+tcltest::test nestgrp-4.0 {
+	parameter within a nested group(with hd)
+} -body {
+	conf::load_from_str -hd . "k=v
+	grp.one.k=q
+	grp.one.k1=v1
+	grp.one\{
+	k=w
+	a.b=c
+	another.grp \{
+	k=v
+	d.e.f=g\}\}"
+} -result {k v grp {one {k w k1 v1 a {b c} another {grp {k v d {e {f g}}}}}}}
+
+tcltest::cleanupTests

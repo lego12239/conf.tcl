@@ -1,0 +1,12 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test comments-1.0 {
+	read conf from a missing file
+} -body {
+	conf::load_from_file test.comments.conf
+} -result "k v k1 v1 k2 v2 k3 v3"
+
+
+tcltest::cleanupTests

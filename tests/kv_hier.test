@@ -1,0 +1,52 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test kv_hier-1.0 {
+	key value pair without hd option
+} -body {
+	conf::load_from_str "k1.k11.k111=v1\nk2.k21.k211=v2"
+} -result {k1.k11.k111 v1 k2.k21.k211 v2}
+
+tcltest::test kv_hier-1.1 {
+	key value pair with hd option, but without hierarchy
+} -body {
+	conf::load_from_str -hd . "k1=v1\nk2=v2"
+} -result {k1 v1 k2 v2}
+
+tcltest::test kv_hier-2.0 {
+	key value pair with hierarchy
+} -body {
+	conf::load_from_str -hd . "k1.k11.k111=v1\nk2.k21.k211=v2"
+} -result {k1 {k11 {k111 v1}} k2 {k21 {k211 v2}}}
+
+tcltest::test kv_hier-2.1 {
+	key value pair with hierarchy
+} -body {
+	conf::load_from_str -hd . "k1.k11.k111=v1
+	k1.k11.k112 = v2
+	k1.k12.k111 = v3
+	k2.k11.k111=v4
+	k2.k12.k111 = v5"
+} -result {k1 {k11 {k111 v1 k112 v2} k12 {k111 v3}} k2 {k11 {k111 v4} k12 {k111 v5}}}
+
+tcltest::test kv_hier-2.2 {
+	key value pair with hierarchy(short names)
+} -body {
+	conf::load_from_str -hd . "a.b.c=v1\nd.e.f=v2"
+} -result {a {b {c v1}} d {e {f v2}}}
+
+
+tcltest::test kv_hier-3.0 {
+	key value pair with hierarchy(long delimeter)
+} -body {
+	conf::load_from_str -hd -> "k1->k11->k111=v1\nk2->k21->k211=v2"
+} -result {k1 {k11 {k111 v1}} k2 {k21 {k211 v2}}}
+
+tcltest::test kv_hier-3.1 {
+	key value pair with hierarchy(long delimeter, short names)
+} -body {
+	conf::load_from_str -hd -> "a->b->c=v1\nd->e->f=v2"
+} -result {a {b {c v1}} d {e {f v2}}}
+
+tcltest::cleanupTests

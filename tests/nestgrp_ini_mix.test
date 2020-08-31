@@ -1,0 +1,43 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test mix-1.0 {
+	mix
+} -body {
+	conf::load_from_str "
+	k=v
+	\[a.b\]
+	k1=v1
+	l1.l2 \{
+	k2=v2
+	\[c.d\]
+	k3=v3
+	l3.l4 \{
+	k4=v4
+	\}
+	k5=v5
+	\}
+	k6=v6"
+} -result {k v a.b {k1 v1 l1.l2 {k2 v2} c.d {k3 v3 l3.l4 {k4 v4} k5 v5} k6 v6}}
+
+tcltest::test mix-2.0 {
+	mix
+} -body {
+	conf::load_from_str -hd . "
+	k=v
+	\[a.b\]
+	k1=v1
+	l1.l2 \{
+	k2=v2
+	\[c.d\]
+	k3=v3
+	l3.l4 \{
+	k4=v4
+	\}
+	k5=v5
+	\}
+	k6=v6"
+} -result {k v a {b {k1 v1 l1 {l2 {k2 v2}} c {d {k3 v3 l3 {l4 {k4 v4}} k5 v5}} k6 v6}}}
+
+tcltest::cleanupTests
