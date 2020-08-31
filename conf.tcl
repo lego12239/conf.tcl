@@ -402,5 +402,5 @@ proc gets_from_str {_ctx _var} {
 }
 }
 
-package provide conf 0.1
+package provide conf 0.9
 
