@@ -64,10 +64,12 @@ k4 = {
 ```
 loaded with `load_from_file my.conf` returns:
 
+```
 k1 v1 k2 {val
 with
 many
 lines} k3 {val with " inside} k4 {{many values} {inside list} {for one key}}
+```
 
 Conf with sections
 ------------------
