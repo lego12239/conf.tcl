@@ -38,7 +38,7 @@ str = DQUOTE %d01-%d255 DQUOTE
         ; any chars in double quotes, where double quotes inside string
         ; can be escaped with \ char
 WSP0 = *WSP
-WSP = SP / HTAB / CR / LF / CRLF / AND_ANY_UNICODE_WHITESPAC_CHAR
+WSP = SP / HTAB / CR / LF / CRLF / AND_ANY_UNICODE_WHITESPACE_CHAR
 ```
 
 Examples
@@ -50,7 +50,7 @@ k2=v2
 ```
 loaded with `load_from_file my.conf` returns:
 
-{k1 v1 k2 v2}
+k1 v1 k2 v2
 
 Conf with sections:
 ```
