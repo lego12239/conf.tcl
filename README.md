@@ -1,9 +1,11 @@
-conf package contains 3 main routines:
+Overview
+=======
+conf package contains 3 main routines for text configuration file loading:
 * conf::load_from_file - to load a conf from a file
 * conf::load_from_fh - to load a conf from an open file handler
 * conf::load_from_str - to load a conf from a string
 
-Each routine returns a parsed conf.
+Each routine returns a parsed conf as a dict. On error an exception is thrown.
 
 Synopsis
 ========
@@ -16,12 +18,14 @@ Where parameters:
 
 Conf syntax
 ===========
-Conf consists from key-value pairs, which can be grouped in sections. Whitespaces
-are ignored. Comment can be started by # symbols at almost any
-place(excluding # inside a quoted string). Key, value and section
-name can consist of any chars exclude any space chars, '=', '#', '"', '[', ']', '{', '}'. If
-there are any of these chars in a key, value or section name, then it should whole
-key, value or section name must be enclosed in double quotes.
+Conf consists from key-value pairs, which can be grouped in sections.
+Whitespaces are ignored. Comment can be started by # symbols at almost any
+place(excluding # inside a quoted string). Key, value and section name can
+consist of any chars exclude any space chars, '=', '#', '"', '[', ']', '{',
+'}'. If a key, value or section name contains any of these characters,
+then the entire key, value or section name must be enclosed in double quotes.
+In this case, if double quotes appears inside the value, it must be escaped
+with a backslash(\).
 
 ABNF of conf syntax:
 ```
@@ -43,7 +47,8 @@ WSP = SP / HTAB / CR / LF / CRLF / AND_ANY_UNICODE_WHITESPACE_CHAR
 
 Examples
 ========
-Simple conf:
+Simple conf
+-----------
 ```
 k1=v1
 k2=v2
@@ -52,7 +57,8 @@ loaded with `load_from_file my.conf` returns:
 
 k1 v1 k2 v2
 
-Conf with sections:
+Conf with sections
+------------------
 ```
 k1 = v1
 [g1]
@@ -64,7 +70,8 @@ loaded with `load_from_file my.conf` returns:
 
 k1 v1 g1 {k2 v2} g2 {k3 v3}
 
-Conf with nested sections:
+Conf with nested sections
+-------------------------
 ```
 k1 = v1
 g1 {
@@ -78,7 +85,8 @@ loaded with `load_from_file my.conf` returns:
 
 k1 v1 g1 {k2 v2 g2 {k3 v3}}
 
-Conf with hierarchy delimiter specified:
+Conf with hierarchy delimiter specified
+---------------------------------------
 ```
 g1.k1 = {1 2 3 {4 5}}
 g2.k2 = v2
@@ -87,7 +95,8 @@ loaded with `load_from_file -hd . my.conf` returns:
 
 g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2}
 
-Conf monster:
+Conf monster
+------------
 ```
 g1.k1 = {1 2 3 {4 5}}
 [g2]
@@ -105,7 +114,8 @@ loaded with `load_from_file -hd . my.conf` returns:
 
 g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2 k3 {k4 v3} g3 {k4 v4 g4 {g5 {k5 {k6 v6}}} g7 {g8 {k7 {k8 v7}}}}}
 
-Conf with comments:
+Conf with comments
+------------------
 ```
 # here is some comments
 k = v
@@ -123,31 +133,32 @@ k v k1 v1 k2 v2 k3 v3 k4 {v4 with # inside}
 Errors
 ======
 
-conf lines: from 3 to 3
-missing value to go with key
+* conf lines: from 3 to 3
+	missing value to go with key
 
-  You try to assign a group to a existent key with a non-group value.
-  E.g.:
-    ```
-    k1 = v1
-    [k1]
-    k2 = v2
-    ```
+	You try to assign a group to a existent key with a non-group value.
+	E.g.:
+	```
+	k1 = v1
+	[k1]
+	k2 = v2
+	```
 
-parse error at 1 line: unexpected token sequence at 1 line: 'k2'#6(L1) 'v2'#6(L1)
+* parse error at 1 line: unexpected token sequence at 1 line: 'k2'#6(L1) 'v2'#6(L1)
  want: KEY = VAL or KEY = { or GROUP_NAME { or } or [GROUP_NAME]
 
-  There is parser error at line 1 for token sequence started at line 1.
-  First token is 'k2' at line 1 (6 - is a token code, you don't need it),
-  second token is 'v2' at line 1. E.g.:
-    ```
-    k2 v2
-    ```
-parse error at 1 line: unexpected token sequence at 1 line: 'k2'#6(L1) '='#1(L1)
+	There is parser error at line 1 for token sequence started at line 1.
+	First token is 'k2' at line 1 (6 - is a token code, you don't need it),
+	second token is 'v2' at line 1. E.g.:
+	```
+	k2 v2
+	```
+
+* parse error at 1 line: unexpected token sequence at 1 line: 'k2'#6(L1) '='#1(L1)
  want: KEY = VAL or KEY = { or GROUP_NAME { or } or [GROUP_NAME]
 possible unclosed quotes at 1 line
 
-  Double quotes is opened, but is not closed. E.g.:
-    ```
-    k2 = "v2
-    ```
+	Double quotes is opened, but is not closed. E.g.:
+	```
+	k2 = "v2
+	```
