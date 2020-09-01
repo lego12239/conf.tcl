@@ -29,16 +29,17 @@ with a backslash(\).
 
 ABNF of conf syntax:
 ```
-conf = *(key-value / group / WSP)
-key-value = WSP0 key WSP0 "=" WSP0 (value / list) WSP0
+conf = *(key-value / group / WSP0)
+key-value = key "=" (value / list)
 key = word / str
 value = word / str
-list = "{" *((word / str / list) WSP) "}"
-group = "[" (word / str) "]" *conf / (word / str) "{" *conf "}"
-word = (%d33 / %d36-60 / %d62-90 / %d92 / %d94-122 / %d124 / %d126 - %d255)
+list = WSP0 "{" *((word / str / list) WSP) "}"
+group = ("[" (word / str) "]" *conf) /
+        ((word / str) "{" *conf "}")
+word = WSP0 (%d33 / %d36-60 / %d62-90 / %d92 / %d94-122 / %d124 / %d126 - %d255) WSP0
         ; all except any space (belong to [:space:] char class), =, #, ",
         ; [, ], {, }
-str = DQUOTE %d01-%d255 DQUOTE
+str = WSP0 DQUOTE %d01-%d255 DQUOTE WSP0
         ; any chars in double quotes, where double quotes inside string
         ; can be escaped with \ char
 WSP0 = *WSP
