@@ -45,6 +45,66 @@ WSP0 = *WSP
 WSP = SP / HTAB / CR / LF / CRLF / AND_ANY_UNICODE_WHITESPACE_CHAR
 ```
 
+Sections
+--------
+A parser context contains a default section prefix for keys, which we can
+change. Thus we shouldn't prepend every key with a section name, if we
+specify a needed section prefix before. E.g. instead of:
+
+```
+sect1.sect2.key1 = val1
+sect1.sect2.key2 = val2
+sect1.sect2.sect3.key3 = val3
+sect1.sect2.key4 = val4
+...
+```
+
+we can write:
+
+```
+[sect1.sect2]
+key1 = val1
+key2 = val2
+sect3.key3 = val3
+key4 = val4
+...
+```
+
+or:
+
+```
+[sect1.sect2]
+key1 = val1
+key2 = val2
+[sect1.sect2.sect3]
+key3 = val3
+[sect1.sect2]
+key4 = val4
+...
+````
+
+If a section is defined with `[SECT_NAME]` syntax, then current section
+prefix(top of a section prefixes stack) is replaced with SECT\_NAME. If a
+section is defined with `SECT_NAME {` syntax, then SECT\_NAME section
+prefix is pushed to a section prefixes stack and becomes a current section
+prefix until we reach corresponding "}", in which case SECT\_NAME is poped
+from a section prefixes stack and previous value becomes a top of a stack
+and a current section prefix. E.g. conf example above can be written as:
+
+```
+sect1.sect2 {
+	key1 = val1
+	key2 = val2
+	sect3 {
+		key3 = val3
+	}
+	key4 = val4
+}
+```
+
+This 2 method of section definition can be used together in one conf, if you
+are bored.
+
 Examples
 ========
 Simple conf
