@@ -9,9 +9,11 @@ Each routine returns a parsed conf as a dict. On error an exception is thrown.
 
 Synopsis
 ========
+```
   load_from_file [-hd STR] FILE_NAME
   load_from_fh [-hd STR] CHAN
   load_from_str [-hd STR] CONF_STR
+```
 
 Where parameters:
   -hd  - use STR as hierarchy delimiter in key names and group names
