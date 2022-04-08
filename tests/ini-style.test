@@ -72,4 +72,20 @@ tcltest::test ini-3.2 {
 	k4.q=v4"
 } -result {k v grp {one {k1 vv k2 v2 k3 {g v3}}} grp-two {k4 {q v4}}}
 
+tcltest::test ini-4.0 {
+	parameter without a group and with a group(with hd)
+} -body {
+	conf::load_from_str -hd . "k=v
+	a.b.k1=v1
+	\[a.b.c.d\]
+	k2=v2
+	e.k3=v3
+	\[a.b.c\]
+	k4=v4
+	\[a\]
+	k5=v5
+	\[a.b.c.d\]
+	k6=v6"
+} -result {k v a {b {k1 v1 c {d {k2 v2 e {k3 v3} k6 v6} k4 v4}} k5 v5}}
+
 tcltest::cleanupTests
