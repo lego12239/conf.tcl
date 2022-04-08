@@ -124,6 +124,7 @@ proc _load {ctx_init} {
 	  buf ""\
 	  toks ""\
 	  sect ""\
+	  sect_type ""\
 	  p_hd ""]
 	set ctx [dict merge $ctx $ctx_init]
 	set err ""
@@ -157,35 +158,25 @@ proc _parse {_ctx} {
 
 	while {[_toks_get ctx 3] > 0} {
 		if {[_toks_match ctx "6 1 6 "]} {
-			set names $sect
+			set names [_sect_get ctx]
 			lappend names {*}[_mk_name ctx [_toks_str ctx 0]]
 			dict set conf {*}$names [_toks_str ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 1 2 "]} {
-			set names $sect
+			set names [_sect_get ctx]
 			lappend names {*}[_mk_name ctx [_toks_str ctx 0]]
 			_toks_drop ctx 3
 			dict set conf {*}$names [_parse_list ctx]
 		} elseif {[_toks_match ctx "4 6 5 "]} {
-			# cache a sect value
-			set sect [lindex [dict get $ctx sect] end-1]
-			lappend sect {*}[_mk_name ctx [_toks_str ctx 1]]
-			# set a new sect value
-			dict set ctx sect [lreplace [dict get $ctx sect] end end $sect]
+			_sect_push ctx 0 [_toks_str ctx 1]
 			_toks_drop ctx 3
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "6 2 "]} {
-			# cache a sect value
-			lappend sect {*}[_mk_name ctx [_toks_str ctx 0]]
-			# add a new sect value
-			dict lappend ctx sect $sect
+			_sect_push ctx 1 [_toks_str ctx 0]
 			_toks_drop ctx 2
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "3 "]} {
-			# cache a sect value
-			set sect [lindex [dict get $ctx sect] end-1]
-			# remove a current sect value
-			dict set ctx sect [lreplace [dict get $ctx sect] end end]
+			_sect_pop ctx 1
 			_toks_drop ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		} else {
@@ -225,6 +216,54 @@ proc _parse_list {_ctx} {
 	}
 
 	return $list
+}
+
+# Add a sect with specified name and type to a sects stack.
+# prms:
+#  _ctx - ctx var name
+#  type - 0 for [] sect, 1 for {} sect
+#  name - a sect name string
+proc _sect_push {_ctx type name} {
+	upvar $_ctx ctx
+
+	if {($type == 0) && ([lindex [dict get $ctx sect_type] end] == 0)} {
+		_sect_pop ctx 0
+	}
+	set sect [lindex [dict get $ctx sect] end]
+	lappend sect {*}[_mk_name ctx $name]
+	dict lappend ctx sect $sect
+	dict lappend ctx sect_type $type
+}
+
+# Remove a section with specified type from a sects stack.
+# prms:
+#  _ctx - ctx var name
+# Remove all sections with other types until the needed is found.
+proc _sect_pop {_ctx type} {
+	upvar $_ctx ctx
+	set is_run 1
+
+	while {$is_run} {
+		if {[llength [dict get $ctx sect_type]] == 0} {
+			error "can't find a section with type $type during a pop"
+		}
+		if {[lindex [dict get $ctx sect_type] end] == $type} {
+			set is_run 0
+		}
+		dict set ctx sect [lrange [dict get $ctx sect] 0 end-1]
+		dict set ctx sect_type [lrange [dict get $ctx sect_type] 0 end-1]
+	}
+}
+
+# Get a current section name(list form).
+# prms:
+#  _ctx - ctx var name
+# ret:
+#  list - a section full name
+proc _sect_get {_ctx} {
+	upvar $_ctx ctx
+
+	return [join [lindex [dict get $ctx sect] end]]
 }
 
 # Get list of names from supplied str by splitting it on hd char sequence.
