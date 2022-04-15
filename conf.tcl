@@ -31,6 +31,9 @@ proc load_from_file {args} {
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
+	if {[expr {$idx + 1}] != [llength $args]} {
+		error "Too many files are specified"
+	}
 	set fh [open [lindex $args $idx]]
 	dict set ctx src $fh
 	dict set ctx prms $opts
@@ -59,6 +62,9 @@ proc load_from_fh {args} {
 	lassign [_opts_parse $args {hd ""} "-s -e"] opts idx
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
+	}
+	if {[expr {$idx + 1}] != [llength $args]} {
+		error "Too many chans are specified"
 	}
 	dict set ctx src [lindex $args $idx]
 	dict set ctx prms $opts

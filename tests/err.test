@@ -10,7 +10,19 @@ tcltest::test err-1.0 {
  want: KEY = VAL or KEY = \{ or GROUP_NAME \{ or \} or \[GROUP_NAME\]
 possible unclosed quotes at 4 line"
 
-tcltest::test err-2.0 {
+tcltest::test err-2.0.0 {
+	too many non parameter arguments
+} -body {
+	conf::load_from_file test.conf non-ex.conf
+} -returnCodes error -result {Too many files are specified}
+
+tcltest::test err-2.0.1 {
+	too many non parameter arguments
+} -body {
+	conf::load_from_fh stdin non-ex-chan
+} -returnCodes error -result {Too many chans are specified}
+
+tcltest::test err-2.0.2 {
 	too many non parameter arguments
 } -body {
 	conf::load_from_str "k=v1" "excessive=data_source"
