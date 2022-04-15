@@ -26,10 +26,15 @@ namespace eval conf {
 # RETURN:
 #   conf dict
 proc load_from_file {args} {
-	set ctx [_mk_ctx_from_args $args]
-	dict set ctx gets_r [namespace current]::gets_from_fh
-	set fh [open [dict get $ctx src]]
+	set ctx [dict create]
+	lassign [_opts_parse $args {hd ""} "-s -e"] opts idx
+	if {$idx >= [llength $args]} {
+		error "File name must be specified"
+	}
+	set fh [open [lindex $args $idx]]
 	dict set ctx src $fh
+	dict set ctx prms $opts
+	dict set ctx gets_r [namespace current]::gets_from_fh
 	set err ""
 	if {[catch {_load $ctx} conf]} {
 		set err [list $conf $::errorInfo $::errorCode]
@@ -50,7 +55,13 @@ proc load_from_file {args} {
 # RETURN:
 #   conf dict
 proc load_from_fh {args} {
-	set ctx [_mk_ctx_from_args $args]
+	set ctx [dict create]
+	lassign [_opts_parse $args {hd ""} "-s -e"] opts idx
+	if {$idx >= [llength $args]} {
+		error "Chan must be specified"
+	}
+	dict set ctx src [lindex $args $idx]
+	dict set ctx prms $opts
 	dict set ctx gets_r [namespace current]::gets_from_fh
 	set conf [_load $ctx]
 	return $conf
@@ -65,14 +76,19 @@ proc load_from_fh {args} {
 # RETURN:
 #   conf dict
 proc load_from_str {args} {
-	set ctx [_mk_ctx_from_args $args {s e}]
-	if {![dict exists $ctx p_s]} {
-		dict set ctx p_s 0
+	set ctx [dict create]
+	lassign [_opts_parse $args {hd "" s 0}] opts idx
+	if {$idx >= [llength $args]} {
+		error "String must be specified"
 	}
-	if {![dict exists $ctx p_e]} {
-		dict set ctx p_e [string length [dict get $ctx src]]
+	if {[expr {$idx + 1}] != [llength $args]} {
+		error "Too many strings are specified"
 	}
-	if {[dict get $ctx p_e] < [dict get $ctx p_s]} {
+	dict set ctx src [lindex $args $idx]
+	dict set ctx prms [dict merge\
+	  [dict create e [string length [dict get $ctx src]]]\
+	  $opts]
+	if {[dict get $ctx prms e] < [dict get $ctx prms s]} {
 		error "e is less than s" "" CONFERR
 	}
 	dict set ctx gets_r [namespace current]::gets_from_str
@@ -80,22 +96,38 @@ proc load_from_str {args} {
 	return $conf
 }
 
-proc _mk_ctx_from_args {argslist {prms ""}} {
-	set ctx [dict create]
-	set len [expr {[llength $argslist] - 1}]
-	lappend prms hd
-	for {set i 0} {$i < $len} {incr i} {
-		set prm [string range [lindex $argslist $i] 1 end]
-		if {[lsearch -exact $prms $prm] < 0} {
+proc _opts_parse {argslist {defaults ""} {mask ""}} {
+	set opts [dict create]
+
+	for {set i 0} {$i < [llength $argslist]} {incr i} {
+		set lex [lindex $argslist $i]
+		if {[lsearch -exact $mask $lex] >= 0} {
+			error "wrong parameter: $lex" "" CONFERR
+		}
+		switch -glob -- $lex {
+		-hd -
+		-s -
+		-e {
+			incr i
+			set oname [string range $lex 1 end]
+			dict set opts $oname [lindex $argslist $i]
+		}
+		-- {
+			incr i
+			break
+		}
+		-* {
 			error "unknown parameter: [lindex $argslist $i]" "" CONFERR
 		}
-		incr i
-		dict set ctx p_$prm [lindex $argslist $i]
+		default {
+			break
+		}
+		}
 	}
 
-	dict set ctx src [lindex $argslist end]
+	set opts [dict merge $defaults $opts]
 
-	return $ctx
+	return [list $opts $i]
 }
 
 # Start a parsing.
@@ -117,15 +149,13 @@ proc _load {ctx_init} {
 	#   toks - input tokens buffer(tokens read, but not yet removed)
 	#   toks_toks - a cache for _toks_match(tokens numbers in one string)
 	#   sect - a current section(hierarchy level name)
-	#   p_hd - a hierarchy delimeter characters for key names
 	set ctx [dict create\
 	  lineno 0\
 	  lineno_tok 0\
 	  buf ""\
 	  toks ""\
 	  sect ""\
-	  sect_type ""\
-	  p_hd ""]
+	  sect_type ""]
 	set ctx [dict merge $ctx $ctx_init]
 	set err ""
 	if {[catch {_parse ctx} conf]} {
@@ -286,7 +316,7 @@ proc _mk_name {_ctx str} {
 	upvar $_ctx ctx
 	set name [list]
 
-	set delim [dict get $ctx p_hd]
+	set delim [dict get $ctx prms hd]
 	if {$delim eq ""} {
 		return [list $str]
 	}
@@ -451,18 +481,19 @@ proc gets_from_str {_ctx _var} {
 	upvar $_ctx ctx
 	upvar $_var var
 
-	if {[dict get $ctx p_s] > [dict get $ctx p_e]} {
+	if {[dict get $ctx prms s] > [dict get $ctx prms e]} {
 		return -1
 	}
-	set pos [string first "\n" [dict get $ctx src] [dict get $ctx p_s]]
-	if {($pos < 0) || ($pos > [dict get $ctx p_e])} {
-		set pos [dict get $ctx p_e]
+	set pos [string first "\n" [dict get $ctx src] [dict get $ctx prms s]]
+	if {($pos < 0) || ($pos > [dict get $ctx prms e])} {
+		set pos [dict get $ctx prms e]
 		set off 0
 	} else {
 		set off -1
 	}
-	set var [string range [dict get $ctx src] [dict get $ctx p_s] ${pos}$off]
-	dict set ctx p_s [expr {$pos + 1}]
+	set var [string range [dict get $ctx src] [dict get $ctx prms s]\
+	  ${pos}$off]
+	dict set ctx prms s [expr {$pos + 1}]
 	return [string length $var]
 }
 }

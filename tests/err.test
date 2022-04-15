@@ -14,7 +14,7 @@ tcltest::test err-2.0 {
 	too many non parameter arguments
 } -body {
 	conf::load_from_str "k=v1" "excessive=data_source"
-} -returnCodes error -result {unknown parameter: k=v1}
+} -returnCodes error -result {Too many strings are specified}
 
 tcltest::test err-2.1 {
 	wrong option name
