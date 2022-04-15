@@ -75,10 +75,14 @@ proc load_from_fh {args} {
 
 # Load a conf from a string.
 # SYNOPSIS:
-#   load_from_str [-hd STR] CONF_STR
+#   load_from_str [-hd STR] [-s START_IDX] [-e END_IDX] CONF_STR
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
+#   -s START_IDX
+#       start index for the parsing
+#   -e END_IDX
+#       end index for the parsing(including char at this idx)
 # RETURN:
 #   conf dict
 proc load_from_str {args} {
