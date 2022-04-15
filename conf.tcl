@@ -493,9 +493,9 @@ proc gets_from_str {_ctx _var} {
 	set pos [string first "\n" [dict get $ctx src] [dict get $ctx prms s]]
 	if {($pos < 0) || ($pos > [dict get $ctx prms e])} {
 		set pos [dict get $ctx prms e]
-		set off 0
+		set off ""
 	} else {
-		set off -1
+		set off "-1"
 	}
 	set var [string range [dict get $ctx src] [dict get $ctx prms s]\
 	  ${pos}$off]
