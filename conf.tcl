@@ -285,7 +285,8 @@ proc _sect_pop {_ctx type} {
 
 	while {$is_run} {
 		if {[llength [dict get $ctx sect_type]] == 0} {
-			error "can't find a section with type $type during a pop"
+			error "can't find a section with type $type during a pop"\
+			  "" CONFERR
 		}
 		if {[lindex [dict get $ctx sect_type] end] == $type} {
 			set is_run 0
