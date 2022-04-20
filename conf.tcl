@@ -27,7 +27,7 @@ namespace eval conf {
 #   conf dict
 proc load_from_file {args} {
 	set ctx [dict create]
-	lassign [_opts_parse $args {hd ""} "-s -e"] opts idx
+	lassign [_opts_parse $args {-hd ""} "-s -e"] opts idx
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
@@ -59,7 +59,7 @@ proc load_from_file {args} {
 #   conf dict
 proc load_from_fh {args} {
 	set ctx [dict create]
-	lassign [_opts_parse $args {hd ""} "-s -e"] opts idx
+	lassign [_opts_parse $args {-hd ""} "-s -e"] opts idx
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
 	}
@@ -87,7 +87,7 @@ proc load_from_fh {args} {
 #   conf dict
 proc load_from_str {args} {
 	set ctx [dict create]
-	lassign [_opts_parse $args {hd "" s 0}] opts idx
+	lassign [_opts_parse $args {-hd "" -s 0}] opts idx
 	if {$idx >= [llength $args]} {
 		error "String must be specified"
 	}
@@ -96,10 +96,10 @@ proc load_from_str {args} {
 	}
 	dict set ctx src [lindex $args $idx]
 	dict set ctx prms [dict merge\
-	  [dict create e [string length [dict get $ctx src]]]\
+	  [dict create -e [string length [dict get $ctx src]]]\
 	  $opts]
-	if {[dict get $ctx prms e] < [dict get $ctx prms s]} {
-		error "e is less than s" "" CONFERR
+	if {[dict get $ctx prms -e] < [dict get $ctx prms -s]} {
+		error "-e is less than -s" "" CONFERR
 	}
 	dict set ctx gets_r [namespace current]::gets_from_str
 	set conf [_load $ctx]
@@ -119,8 +119,11 @@ proc _opts_parse {argslist {defaults ""} {mask ""}} {
 		-s -
 		-e {
 			incr i
-			set oname [string range $lex 1 end]
-			dict set opts $oname [lindex $argslist $i]
+			# Uncomment this if you want opts without "-".
+			# Note: in this case "-" should be removed in every element of
+			# list in the defaults arg too.
+			#set lex [string range $lex 1 end]
+			dict set opts $lex [lindex $argslist $i]
 		}
 		-- {
 			incr i
@@ -326,7 +329,7 @@ proc _mk_name {_ctx str} {
 	upvar $_ctx ctx
 	set name [list]
 
-	set delim [dict get $ctx prms hd]
+	set delim [dict get $ctx prms -hd]
 	if {$delim eq ""} {
 		return [list $str]
 	}
@@ -491,19 +494,19 @@ proc gets_from_str {_ctx _var} {
 	upvar $_ctx ctx
 	upvar $_var var
 
-	if {[dict get $ctx prms s] > [dict get $ctx prms e]} {
+	if {[dict get $ctx prms -s] > [dict get $ctx prms -e]} {
 		return -1
 	}
-	set pos [string first "\n" [dict get $ctx src] [dict get $ctx prms s]]
-	if {($pos < 0) || ($pos > [dict get $ctx prms e])} {
-		set pos [dict get $ctx prms e]
+	set pos [string first "\n" [dict get $ctx src] [dict get $ctx prms -s]]
+	if {($pos < 0) || ($pos > [dict get $ctx prms -e])} {
+		set pos [dict get $ctx prms -e]
 		set off ""
 	} else {
 		set off "-1"
 	}
-	set var [string range [dict get $ctx src] [dict get $ctx prms s]\
+	set var [string range [dict get $ctx src] [dict get $ctx prms -s]\
 	  ${pos}$off]
-	dict set ctx prms s [expr {$pos + 1}]
+	dict set ctx prms -s [expr {$pos + 1}]
 	return [string length $var]
 }
 }
