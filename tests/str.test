@@ -44,4 +44,10 @@ tcltest::test str-3.0 {
 	conf::load_from_str -s 6 -e 5 "k1=v1 k2=v2"
 } -returnCodes error -result "-e is less than -s"
 
+tcltest::test str-4.2 {
+	opt -e
+} -body {
+	conf::load_from_str -e 5 "k1=v1 k2=v2"
+} -result "k1 v1"
+
 tcltest::cleanupTests

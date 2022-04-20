@@ -19,15 +19,18 @@ namespace eval conf {
 ######################################################################
 # Load a conf from a file.
 # SYNOPSIS:
-#   load_from_file [-hd STR] FILE_NAME
+#   load_from_file [-hd STR] [-default_conf STR] FILE_NAME
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
+#   -default_conf STR
+#       use STR text as a default conf.
 # RETURN:
 #   conf dict
 proc load_from_file {args} {
 	set ctx [dict create]
-	lassign [_opts_parse $args {-hd ""} "-s -e"] opts idx
+
+	lassign [_opts_parse $args {-hd "" -default_conf ""} "-s -e"] opts idx
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
@@ -36,12 +39,15 @@ proc load_from_file {args} {
 	}
 	set fh [open [lindex $args $idx]]
 	dict set ctx src $fh
+
 	dict set ctx prms $opts
 	dict set ctx gets_r [namespace current]::gets_from_fh
+
 	set err ""
 	if {[catch {_load $ctx} conf]} {
 		set err [list $conf $::errorInfo $::errorCode]
 	}
+
 	close $fh
 	if {$err ne ""} {
 		error {*}$err
@@ -51,15 +57,17 @@ proc load_from_file {args} {
 
 # Load a conf from an open file handle.
 # SYNOPSIS:
-#   load_from_fh [-hd STR] CHAN
+#   load_from_fh [-hd STR] [-default_conf STR] CHAN
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
+#   -default_conf STR
+#       use STR text as a default conf.
 # RETURN:
 #   conf dict
 proc load_from_fh {args} {
 	set ctx [dict create]
-	lassign [_opts_parse $args {-hd ""} "-s -e"] opts idx
+	lassign [_opts_parse $args {-hd "" -default_conf ""} "-s -e"] opts idx
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
 	}
@@ -75,10 +83,12 @@ proc load_from_fh {args} {
 
 # Load a conf from a string.
 # SYNOPSIS:
-#   load_from_str [-hd STR] [-s START_IDX] [-e END_IDX] CONF_STR
+#   load_from_str [-hd STR] [-default_conf STR] [-s START_IDX] [-e END_IDX] CONF_STR
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
+#   -default_conf STR
+#       use STR text as a default conf.
 #   -s START_IDX
 #       start index for the parsing
 #   -e END_IDX
@@ -87,7 +97,7 @@ proc load_from_fh {args} {
 #   conf dict
 proc load_from_str {args} {
 	set ctx [dict create]
-	lassign [_opts_parse $args {-hd "" -s 0}] opts idx
+	lassign [_opts_parse $args {-hd "" -default_conf "" -s 0}] opts idx
 	if {$idx >= [llength $args]} {
 		error "String must be specified"
 	}
@@ -116,6 +126,7 @@ proc _opts_parse {argslist {defaults ""} {mask ""}} {
 		}
 		switch -glob -- $lex {
 		-hd -
+		-default_conf -
 		-s -
 		-e {
 			incr i
@@ -170,8 +181,20 @@ proc _load {ctx_init} {
 	  sect ""\
 	  sect_type ""]
 	set ctx [dict merge $ctx $ctx_init]
+
+	if {[dict get $ctx prms -default_conf] ne ""} {
+		if {[catch {load_from_str -hd [dict get $ctx prms -hd]\
+		  [dict get $ctx prms -default_conf]} conf_default]} {
+			error "default conf parse error: $conf_default"\
+			  "default conf parse error: $::errorInfo"\
+			  $::errorCode
+		}
+	} else {
+		set conf_default [dict create]
+	}
+
 	set err ""
-	if {[catch {_parse ctx} conf]} {
+	if {[catch {_parse ctx $conf_default} conf]} {
 		if {$::errorCode ne "CONFERR"} {
 			if {[dict get $ctx lineno_tok] != 0} {
 				set err "conf lines: from [_toks_lineno ctx 0] to [dict get $ctx lineno_tok]"
@@ -193,9 +216,8 @@ proc _load {ctx_init} {
 	return $conf
 }
 
-proc _parse {_ctx} {
+proc _parse {_ctx conf} {
 	upvar $_ctx ctx
-	set conf [dict create]
 	# cache a sect value
 	set sect [lindex [dict get $ctx sect] end]
 

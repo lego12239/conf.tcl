@@ -14,6 +14,12 @@ tcltest::test file-2.0 {
 	conf::load_from_file -hd . test.conf
 } -result {k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4} k5 v5}
 
+tcltest::test file-2.1 {
+	read conf from a file (-default_conf)
+} -body {
+	conf::load_from_file -hd . -default_conf "k5 = def kdef = vdef" test.conf
+} -result {k5 v5 kdef vdef k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4}}
+
 tcltest::test file-3.0 {
 	read conf from a file handler
 } -body {
@@ -22,5 +28,14 @@ tcltest::test file-3.0 {
 	close $fh
 	return $conf
 } -result {k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4} k5 v5}
+
+tcltest::test file-3.1 {
+	read conf from a file handler (-default_conf)
+} -body {
+	set fh [open test.conf]
+	set conf [conf::load_from_fh -hd . -default_conf "k5 = def kdef = vdef" $fh]
+	close $fh
+	return $conf
+} -result {k5 v5 kdef vdef k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4}}
 
 tcltest::cleanupTests
