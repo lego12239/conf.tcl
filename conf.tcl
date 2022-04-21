@@ -109,7 +109,7 @@ proc load_from_str {args} {
 	  [dict create -e [string length [dict get $ctx src]]]\
 	  $opts]
 	if {[dict get $ctx prms -e] < [dict get $ctx prms -s]} {
-		error "-e is less than -s" "" CONFERR
+		error "-e is less than -s"
 	}
 	dict set ctx gets_r [namespace current]::gets_from_str
 	set conf [_load $ctx]
@@ -122,7 +122,7 @@ proc _opts_parse {argslist {defaults ""} {mask ""}} {
 	for {set i 0} {$i < [llength $argslist]} {incr i} {
 		set lex [lindex $argslist $i]
 		if {[lsearch -exact $mask $lex] >= 0} {
-			error "wrong parameter: $lex" "" CONFERR
+			error "wrong parameter: $lex"
 		}
 		switch -glob -- $lex {
 		-hd -
@@ -141,7 +141,7 @@ proc _opts_parse {argslist {defaults ""} {mask ""}} {
 			break
 		}
 		-* {
-			error "unknown parameter: [lindex $argslist $i]" "" CONFERR
+			error "unknown parameter: [lindex $argslist $i]"
 		}
 		default {
 			break
