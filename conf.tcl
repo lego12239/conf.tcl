@@ -493,9 +493,9 @@ proc _get_tok {_ctx} {
 	upvar $_ctx ctx
 	set tok -1
 
-	dict set ctx lineno_tok [dict get $ctx lineno]
+	dict set ctx src lineno_tok [dict get $ctx src lineno]
 	while {$tok < 0} {
-		switch -regexp -matchvar mstr [dict get $ctx buf] {
+		switch -regexp -matchvar mstr [dict get $ctx src buf] {
 			{^\s+} {
 				_biteoff_buf ctx [string length [lindex $mstr 0]]
 			}
