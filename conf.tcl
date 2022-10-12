@@ -28,9 +28,7 @@ namespace eval conf {
 # RETURN:
 #   conf dict
 proc load_from_file {args} {
-	set ctx [dict create]
-
-	lassign [_opts_parse $args {-hd "" -default_conf ""} "-s -e"] opts idx
+	lassign [_opts_parse $args {} "-s -e"] opts idx
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
@@ -38,15 +36,19 @@ proc load_from_file {args} {
 		error "Too many files are specified"
 	}
 	set fh [open [lindex $args $idx]]
-	dict set ctx src $fh
+	set src [dict create\
+	  src $fh\
+	  gets_r [namespace current]::gets_from_fh]
 
-	dict set ctx prms $opts
-	dict set ctx gets_r [namespace current]::gets_from_fh
+	set ctx [_ctx_mk $opts]
+	_ctx_src_push ctx $src
 
 	set err ""
 	if {[catch {_load $ctx} conf]} {
 		set err [list $conf $::errorInfo $::errorCode]
 	}
+
+	_ctx_src_pop ctx
 
 	close $fh
 	if {$err ne ""} {
@@ -66,18 +68,22 @@ proc load_from_file {args} {
 # RETURN:
 #   conf dict
 proc load_from_fh {args} {
-	set ctx [dict create]
-	lassign [_opts_parse $args {-hd "" -default_conf ""} "-s -e"] opts idx
+	lassign [_opts_parse $args {} "-s -e"] opts idx
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
 	}
 	if {[expr {$idx + 1}] != [llength $args]} {
 		error "Too many chans are specified"
 	}
-	dict set ctx src [lindex $args $idx]
-	dict set ctx prms $opts
-	dict set ctx gets_r [namespace current]::gets_from_fh
+	set src [dict create\
+	  src [lindex $args $idx]\
+	  gets_r [namespace current]::gets_from_fh]
+
+	set ctx [_ctx_mk $opts]
+	_ctx_src_push ctx $src
 	set conf [_load $ctx]
+	_ctx_src_pop ctx
+
 	return $conf
 }
 
@@ -96,23 +102,28 @@ proc load_from_fh {args} {
 # RETURN:
 #   conf dict
 proc load_from_str {args} {
-	set ctx [dict create]
-	lassign [_opts_parse $args {-hd "" -default_conf "" -s 0}] opts idx
+	lassign [_opts_parse $args {-s 0}] opts idx
 	if {$idx >= [llength $args]} {
 		error "String must be specified"
 	}
 	if {[expr {$idx + 1}] != [llength $args]} {
 		error "Too many strings are specified"
 	}
-	dict set ctx src [lindex $args $idx]
-	dict set ctx prms [dict merge\
-	  [dict create -e [string length [dict get $ctx src]]]\
+	set src [dict create\
+	  src [lindex $args $idx]\
+	  gets_r [namespace current]::gets_from_str]
+	set opts [dict merge\
+	  [dict create -e [string length [lindex $args $idx]]]\
 	  $opts]
-	if {[dict get $ctx prms -e] < [dict get $ctx prms -s]} {
+	if {[dict get $opts -e] < [dict get $opts -s]} {
 		error "-e is less than -s"
 	}
-	dict set ctx gets_r [namespace current]::gets_from_str
+	set ctx [_ctx_mk $opts]
+	_ctx_src_push ctx $src
+#	puts "CTX: $ctx"
 	set conf [_load $ctx]
+	_ctx_src_pop ctx
+
 	return $conf
 }
 
@@ -155,33 +166,9 @@ proc _opts_parse {argslist {defaults ""} {mask ""}} {
 }
 
 # Start a parsing.
-# ctx_init - context initial values
-#            Can contain:
-#              gets_r - (MANDATORY) next line get routine
-#              src - (MANDATORY) a config source
-#              p_s - current offset inside src(only for conf::gets_from_str)
-#              p_e - last offset inside src(only for conf::gets_from_str)
-proc _load {ctx_init} {
-	# Context for parser/lexer
-	# lexer keys:
-	#   src - a config source
-	#   gets_r - a routine for next line reading(must work like a gets)
-	#   lineno - line number of last read line of a source
-	#   lineno_tok - line number of a start line of a last token
-	#   buf - input buffer(lines read from a source)
-	# parser:
-	#   toks - input tokens buffer(tokens read, but not yet removed)
-	#   toks_toks - a cache for _toks_match(tokens numbers in one string)
-	#   sect - a current section(hierarchy level name)
-	set ctx [dict create\
-	  lineno 0\
-	  lineno_tok 0\
-	  buf ""\
-	  toks ""\
-	  sect ""\
-	  sect_type ""]
-	set ctx [dict merge $ctx $ctx_init]
-
+# prms:
+#  ctx - context
+proc _load {ctx} {
 	if {[dict get $ctx prms -default_conf] ne ""} {
 		if {[catch {load_from_str -hd [dict get $ctx prms -hd]\
 		  [dict get $ctx prms -default_conf]} conf_default]} {
@@ -196,19 +183,19 @@ proc _load {ctx_init} {
 	set err ""
 	if {[catch {_parse ctx $conf_default} conf]} {
 		if {$::errorCode ne "CONFERR"} {
-			if {[dict get $ctx lineno_tok] != 0} {
-				set err "conf lines: from [_toks_lineno ctx 0] to [dict get $ctx lineno_tok]"
+			if {[dict get $ctx src lineno_tok] != 0} {
+				set err "conf lines: from [_toks_lineno ctx 0] to [dict get $ctx src lineno_tok]"
 			}
 			error "$conf\($err)" "$err\n$::errorInfo" $::errorCode
 		}
 		set err $conf
 	}
-	if {[dict get $ctx buf] ne ""} {
-		if {[string index [dict get $ctx buf] 0] eq {"}} {
+	if {[dict get $ctx src buf] ne ""} {
+		if {[string index [dict get $ctx src buf] 0] eq {"}} {
 			error "$err\npossible unclosed quotes at\
-			  [dict get $ctx lineno_tok] line" "" CONFERR
+			  [dict get $ctx src lineno_tok] line" "" CONFERR
 		} else {
-			error "$err\ntoken input buffer: '[dict get $ctx buf]'" "" CONFERR
+			error "$err\ntoken input buffer: '[dict get $ctx src buf]'" "" CONFERR
 		}
 	} elseif {$err ne ""} {
 		error "$err" "" CONFERR
@@ -242,7 +229,7 @@ proc _parse {_ctx conf} {
 			_toks_drop ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		} else {
-			error "parse error at [dict get $ctx lineno_tok] line:\
+			error "parse error at [dict get $ctx src lineno_tok] line:\
 			  unexpected token sequence at [_toks_lineno ctx 0] line:\
 			  [_toks_dump ctx]\n\
 			  want: KEY = VAL or KEY = \{ or GROUP_NAME \{ or \} or\
@@ -270,7 +257,7 @@ proc _parse_list {_ctx} {
 			_toks_drop ctx 1
 			break
 		} else {
-			error "parse error at [dict get $ctx lineno_tok] line:\
+			error "parse error at [dict get $ctx src lineno_tok] line:\
 			  unexpected token sequence at [_toks_lineno ctx 0] line:\
 			  [_toks_dump ctx]\n\
 			  want: VAL or \} or \{" "" CONFERR
@@ -278,6 +265,68 @@ proc _parse_list {_ctx} {
 	}
 
 	return $list
+}
+
+# Create an initial context.
+# prms:
+#  prms - a dict with parameters:
+#         -hd - hierarchy delimiter
+#         -default_conf - a string with a default conf
+#         -s  - start offset for src str(only for gets_from_str)
+#         -e  - last offset for src str(only for gets_from_str)
+# ret:
+#  context dict with keys:
+#    prms - a dict with parameters
+#    src  - a current source
+#    srcs - a stack with sources
+#    sect - a section stack(section is a hierarchy level name)
+#    sect_type - a section type stack
+proc _ctx_mk {{prms ""}} {
+	set prms_def [dict create\
+	  -hd ""\
+	  -default_conf ""]
+	set prms [dict merge $prms_def $prms]
+
+	return [dict create\
+	  prms $prms\
+	  src [dict create]\
+	  srcs [list]\
+	  sect [list]\
+	  sect_type [list]]
+}
+
+# Push to a stack a specified src data and set it as a current src.
+# src keys:
+#   for lexer:
+#     src - a source(string, CHAN or other data specific for a source)
+#     gets_r - a routine for next line reading(must work like a gets)
+#     lineno - line number of a last read line of a source
+#     lineno_tok - line number of a start line of a last token
+#     buf - input buffer(lines read from a source)
+#   for parser:
+#     toks - input tokens buffer(tokens read, but not yet removed)
+#     toks_toks - a cache for _toks_match(tokens numbers in one string)
+proc _ctx_src_push {_ctx src} {
+	upvar $_ctx ctx
+	set src_def [dict create\
+	  gets_r ""\
+	  lineno 0\
+	  lineno_tok 0\
+	  buf ""\
+	  toks ""\
+	  toks_toks ""]
+
+	set src [dict merge $src_def $src]
+	dict lappend ctx srcs $src
+	dict set ctx src $src
+}
+
+# Pop from a stack one src and set the next one as a current src.
+proc _ctx_src_pop {_ctx} {
+	upvar $_ctx ctx
+
+	dict set ctx srcs [lrange [dict get $ctx srcs] 0 end-1]
+	dict set ctx src [lindex [dict get $ctx srcs] end]
 }
 
 # Add a sect with specified name and type to a sects stack.
@@ -370,21 +419,24 @@ proc _mk_name {_ctx str} {
 proc _toks_get {_ctx cnt} {
 	upvar $_ctx ctx
 
-	set len [llength [dict get $ctx toks]]
+	set toks [dict get $ctx src toks]
+	set len [llength $toks]
 	# Read tokens
 	while {($len < $cnt) && ([set tok [_get_tok ctx]] >= 0)} {
 		# Debug output
-#		puts "$tok: '[dict get $ctx tok_str]'"
-		dict lappend ctx toks [list $tok [dict get $ctx tok_str]\
-		  [dict get $ctx lineno_tok]]
+#		puts "$tok: '[dict get $ctx src tok_str]'"
+		lappend toks [list $tok [dict get $ctx src tok_str]\
+		  [dict get $ctx src lineno_tok]]
 		incr len
 	}
+	dict set ctx src toks $toks
+
 	# Make a string from a tokens numbers sequence
 	set str ""
 	for {set i 0} {$i < $len} {incr i} {
-		set str "$str[lindex [dict get $ctx toks] $i 0] "
+		set str "$str[lindex [dict get $ctx src toks] $i 0] "
 	}
-	dict set ctx toks_toks $str
+	dict set ctx src toks_toks $str
 
 	return $len
 }
@@ -393,7 +445,7 @@ proc _toks_drop {_ctx cnt} {
 	upvar $_ctx ctx
 
 	incr cnt -1
-	dict set ctx toks [lreplace [dict get $ctx toks] 0 $cnt]
+	dict set ctx src toks [lreplace [dict get $ctx src toks] 0 $cnt]
 }
 
 proc _toks_match {_ctx str} {
@@ -401,28 +453,28 @@ proc _toks_match {_ctx str} {
 	set len [string length $str]
 
 	return [string equal -length [string length $str]\
-	  [dict get $ctx toks_toks] $str]
+	  [dict get $ctx src toks_toks] $str]
 }
 
 proc _toks_str {_ctx idx} {
 	upvar $_ctx ctx
 
-	return [lindex [dict get $ctx toks] $idx 1]
+	return [lindex [dict get $ctx src toks] $idx 1]
 }
 
 proc _toks_lineno {_ctx idx} {
 	upvar $_ctx ctx
 
-	return [lindex [dict get $ctx toks] $idx 2]
+	return [lindex [dict get $ctx src toks] $idx 2]
 }
 
 proc _toks_dump {_ctx} {
 	upvar $_ctx ctx
 	set res ""
-	set len [llength [dict get $ctx toks]]
+	set len [llength [dict get $ctx src toks]]
 
 	for {set i 0} {$i < $len} {incr i} {
-		set tok [lindex [dict get $ctx toks] $i]
+		set tok [lindex [dict get $ctx src toks] $i]
 		set res "$res'[lindex $tok 1]'#[lindex $tok 0](L[lindex $tok 2]) "
 	}
 	return [string range $res 0 end-1]
@@ -472,15 +524,15 @@ proc _get_tok {_ctx} {
 				set tok 7
 			}
 			default {
-				if {[[dict get $ctx gets_r] ctx line] < 0} {
+				if {[[dict get $ctx src gets_r] ctx line] < 0} {
 					return -1
 				}
-				dict incr ctx lineno
-				if {[dict get $ctx buf] ne ""} {
-					dict append ctx buf "\n$line"
+				dict set ctx src lineno [expr {[dict get $ctx src lineno]+1}]
+				if {[dict get $ctx src buf] ne ""} {
+					dict set ctx src buf "[dict get $ctx src buf]\n$line"
 				} else {
-					dict set ctx lineno_tok [dict get $ctx lineno]
-					dict set ctx buf $line
+					dict set ctx src lineno_tok [dict get $ctx src lineno]
+					dict set ctx src buf $line
 				}
 			}
 		}
@@ -494,23 +546,23 @@ proc _get_tok {_ctx} {
 	} else {
 		set str [lindex $mstr 0]
 	}
-	dict set ctx tok_str $str
+	dict set ctx src tok_str $str
 	return $tok
 }
 
 proc _biteoff_buf {_ctx len} {
 	upvar $_ctx ctx
-	dict set ctx buf [string range [dict get $ctx buf] $len end]
+	dict set ctx src buf [string range [dict get $ctx src buf] $len end]
 }
 
 ######################################################################
-# gets routines
+# src callbacks
 ######################################################################
 proc gets_from_fh {_ctx _var} {
 	upvar $_ctx ctx
 	upvar $_var var
 
-	return [gets [dict get $ctx src] var]
+	return [gets [dict get $ctx src src] var]
 }
 
 proc gets_from_str {_ctx _var} {
@@ -520,14 +572,14 @@ proc gets_from_str {_ctx _var} {
 	if {[dict get $ctx prms -s] > [dict get $ctx prms -e]} {
 		return -1
 	}
-	set pos [string first "\n" [dict get $ctx src] [dict get $ctx prms -s]]
+	set pos [string first "\n" [dict get $ctx src src] [dict get $ctx prms -s]]
 	if {($pos < 0) || ($pos > [dict get $ctx prms -e])} {
 		set pos [dict get $ctx prms -e]
 		set off ""
 	} else {
 		set off "-1"
 	}
-	set var [string range [dict get $ctx src] [dict get $ctx prms -s]\
+	set var [string range [dict get $ctx src src] [dict get $ctx prms -s]\
 	  ${pos}$off]
 	dict set ctx prms -s [expr {$pos + 1}]
 	return [string length $var]
