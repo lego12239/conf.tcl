@@ -316,8 +316,8 @@ proc _ctx_src_push {_ctx src} {
 	  toks ""\
 	  toks_toks ""]
 
+	dict lappend ctx srcs [dict get $ctx src]
 	set src [dict merge $src_def $src]
-	dict lappend ctx srcs $src
 	dict set ctx src $src
 }
 
@@ -325,8 +325,8 @@ proc _ctx_src_push {_ctx src} {
 proc _ctx_src_pop {_ctx} {
 	upvar $_ctx ctx
 
-	dict set ctx srcs [lrange [dict get $ctx srcs] 0 end-1]
 	dict set ctx src [lindex [dict get $ctx srcs] end]
+	dict set ctx srcs [lrange [dict get $ctx srcs] 0 end-1]
 }
 
 # Add a sect with specified name and type to a sects stack.
