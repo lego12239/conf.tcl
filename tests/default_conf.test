@@ -5,14 +5,7 @@ package require conf
 tcltest::test default_conf-1.0 {
 	-default_conf
 } -body {
-	conf::load_from_str -default_conf "k1 = vdef kdef = vdef" "k1 = v1 k2 = v2"
+	conf::load_from_str -default {k1 vdef kdef vdef} "k1 = v1 k2 = v2"
 } -result {k1 v1 kdef vdef k2 v2}
-
-tcltest::test default_conf-2.0 {
-	-default_conf (with syntax err)
-} -body {
-	conf::load_from_str -default_conf "k1 = vdef kdef = " "k1 = v1 k2 = v2"
-} -returnCodes error -result "default conf parse error: parse error at 1 line: unexpected token sequence at 1 line: 'kdef'#6(L1) '='#1(L1)
- want: KEY = VAL or KEY = { or GROUP_NAME { or } or \[GROUP_NAME\]"
 
 tcltest::cleanupTests
