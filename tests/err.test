@@ -49,4 +49,11 @@ tcltest::test err-4.0 {
 } -returnCodes error -result "parse error at 9 line: unexpected token sequence at 8 line: 'k4'#6(L8) '='#1(L8) '}'#3(L9)
  want: KEY = VAL or KEY = \{ or GROUP_NAME \{ or \} or \[GROUP_NAME\]"
 
+tcltest::test err-5.0 {
+	read conf from a file with err (included file)
+} -body {
+	conf::load_from_file -hd . test_incl.4.conf
+} -returnCodes error -result "parse error at 4 line: unexpected token sequence at 3 line: 'k3'#6(L3) '='#1(L3) '}'#3(L4)
+ want: KEY = VAL or KEY = \{ or GROUP_NAME \{ or \} or \[GROUP_NAME\]"
+
 tcltest::cleanupTests
