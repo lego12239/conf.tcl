@@ -10,16 +10,16 @@ Each routine returns a parsed conf as a dict. On error an exception is thrown.
 Synopsis
 ========
 ```
-  load_from_file [-hd STR] [-default_conf STR] FILE_NAME
-  load_from_fh [-hd STR] [-default_conf STR] CHAN
-  load_from_str [-hd STR] [-default_conf STR] [-s START_INDEX] [-e END_INDEX] CONF_STR
+  load_from_file [-hd STR] [-default DICT] FILE_NAME
+  load_from_fh [-hd STR] [-default DICT] CHAN
+  load_from_str [-hd STR] [-default DICT] [-s START_INDEX] [-e END_INDEX] CONF_STR
 ```
 
 Where parameters:
   -hd
       use STR as hierarchy delimiter in key names and group names("." by default)
-  -default_conf STR
-      use STR text as a default conf.
+  -default DICT
+      use DICT as an initial(default) conf.
   -s
       start parsing of a string from specified position(in chars)
   -e
