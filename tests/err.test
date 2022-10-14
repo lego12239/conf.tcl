@@ -32,7 +32,7 @@ tcltest::test err-2.1 {
 	wrong option name
 } -body {
 	conf::load_from_str -wrong_parameter 1 "k=v1"
-} -returnCodes error -result {unknown parameter: -wrong_parameter}
+} -returnCodes error -result {wrong option: -wrong_parameter}
 
 tcltest::test err-3.0 {
 	try to replace a parameter with a group

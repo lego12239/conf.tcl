@@ -28,7 +28,7 @@ namespace eval conf {
 # RETURN:
 #   conf dict
 proc load_from_file {args} {
-	lassign [_opts_parse $args {} "-s -e"] opts idx
+	lassign [_opts_parse $args {-hd 1 -default_conf 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
@@ -68,7 +68,7 @@ proc load_from_file {args} {
 # RETURN:
 #   conf dict
 proc load_from_fh {args} {
-	lassign [_opts_parse $args {} "-s -e"] opts idx
+	lassign [_opts_parse $args {-hd 1 -default_conf 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
 	}
@@ -102,7 +102,7 @@ proc load_from_fh {args} {
 # RETURN:
 #   conf dict
 proc load_from_str {args} {
-	lassign [_opts_parse $args {-s 0}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default_conf 1 -s 1 -e 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "String must be specified"
 	}
@@ -113,7 +113,7 @@ proc load_from_str {args} {
 	  src [lindex $args $idx]\
 	  gets_r [namespace current]::gets_from_str]
 	set opts [dict merge\
-	  [dict create -e [string length [lindex $args $idx]]]\
+	  [dict create -s 0 -e [string length [lindex $args $idx]]]\
 	  $opts]
 	if {[dict get $opts -e] < [dict get $opts -s]} {
 		error "-e is less than -s"
@@ -127,42 +127,46 @@ proc load_from_str {args} {
 	return $conf
 }
 
-proc _opts_parse {argslist {defaults ""} {mask ""}} {
-	set opts [dict create]
+# Parse options from argslist.
+# Stop on first non-option argument or after --.
+# prms:
+#  argslist - arguments to parse
+#  spec     - opts spec. A dict where:
+#             key - opt name (started with "-")
+#             value - 0 for opt without argument
+#                     1 for opt with argument
+# ret:
+#  list - 1 item is opts dict with opts from argslist, 2 item is index for first
+#         non-option argument
+#
+# E.g.:
+#  _opts_parse "-dval -t 7 -- fname q" {-dval 0 -D 1 -t 1}
+#
+proc _opts_parse {argslist spec} {
+        set opts [dict create]
 
-	for {set i 0} {$i < [llength $argslist]} {incr i} {
-		set lex [lindex $argslist $i]
-		if {[lsearch -exact $mask $lex] >= 0} {
-			error "wrong parameter: $lex"
-		}
-		switch -glob -- $lex {
-		-hd -
-		-default_conf -
-		-s -
-		-e {
-			incr i
-			# Uncomment this if you want opts without "-".
-			# Note: in this case "-" should be removed in every element of
-			# list in the defaults arg too.
-			#set lex [string range $lex 1 end]
-			dict set opts $lex [lindex $argslist $i]
-		}
-		-- {
-			incr i
-			break
-		}
-		-* {
-			error "unknown parameter: [lindex $argslist $i]"
-		}
-		default {
-			break
-		}
-		}
-	}
+        for {set i 0} {$i < [llength $argslist]} {incr i} {
+                set lex [lindex $argslist $i]
+                if {![string equal -length 1 $lex "-"]} {
+                        break
+                }
+                if {$lex eq "--"} {
+                        incr i
+                        break
+                }
+                if {![dict exists $spec $lex]} {
+                        error "wrong option: $lex"
+                }
+                set val [dict get $spec $lex]
+                if {[lindex $val 0]} {
+                        incr i
+                        dict set opts $lex [lindex $argslist $i]
+                } else {
+                        dict incr opts $lex
+                }
+        }
 
-	set opts [dict merge $defaults $opts]
-
-	return [list $opts $i]
+        return [list $opts $i]
 }
 
 # Start a parsing.
