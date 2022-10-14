@@ -19,16 +19,18 @@ namespace eval conf {
 ######################################################################
 # Load a conf from a file.
 # SYNOPSIS:
-#   load_from_file [-hd STR] [-default DICT] FILE_NAME
+#   load_from_file [-hd STR] [-default DICT] [-path STR] FILE_NAME
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
 #   -default DICT
 #       use DICT as an initial(default) conf.
+#   -path STR
+#       use STR as file path prefix for every included file
 # RETURN:
 #   conf dict
 proc load_from_file {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1 -path 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
@@ -59,16 +61,18 @@ proc load_from_file {args} {
 
 # Load a conf from an open file handle.
 # SYNOPSIS:
-#   load_from_fh [-hd STR] [-default DICT] CHAN
+#   load_from_fh [-hd STR] [-default DICT] [-path STR] CHAN
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
 #   -default DICT
 #       use DICT as an initial(default) conf.
+#   -path STR
+#       use STR as file path prefix for every included file
 # RETURN:
 #   conf dict
 proc load_from_fh {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1 -path 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
 	}
@@ -89,12 +93,15 @@ proc load_from_fh {args} {
 
 # Load a conf from a string.
 # SYNOPSIS:
-#   load_from_str [-hd STR] [-default DICT] [-s START_IDX] [-e END_IDX] CONF_STR
+#   load_from_str [-hd STR] [-default DICT] [-path STR] [-s START_IDX]
+#     [-e END_IDX] CONF_STR
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
 #   -default DICT
 #       use DICT as an initial(default) conf.
+#   -path STR
+#       use STR as file path prefix for every included file
 #   -s START_IDX
 #       start index for the parsing
 #   -e END_IDX
@@ -102,7 +109,7 @@ proc load_from_fh {args} {
 # RETURN:
 #   conf dict
 proc load_from_str {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1 -s 1 -e 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -s 1 -e 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "String must be specified"
 	}
@@ -227,7 +234,7 @@ proc __parse {_ctx conf} {
 			_toks_drop ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "8 6 "]} {
-			set fh [open [_toks_str ctx 1]]
+			set fh [open "[dict get $ctx prms -path][_toks_str ctx 1]"]
 			set src [dict create\
 			  src $fh\
 			  gets_r [namespace current]::gets_from_fh]
@@ -287,6 +294,7 @@ proc _parse_list {_ctx} {
 #  prms - a dict with parameters:
 #         -hd - hierarchy delimiter
 #         -default - a string with a default conf
+#         -path    - a string with a default file path prefix
 #         -s  - start offset for src str(only for gets_from_str)
 #         -e  - last offset for src str(only for gets_from_str)
 # ret:
@@ -299,8 +307,12 @@ proc _parse_list {_ctx} {
 proc _ctx_mk {{prms ""}} {
 	set prms_def [dict create\
 	  -hd ""\
-	  -default ""]
+	  -default ""\
+	  -path "./"]
 	set prms [dict merge $prms_def $prms]
+	if {[string index [dict get $prms -path] end] ne "/"} {
+		dict append prms -path "/"
+	}
 
 	return [dict create\
 	  prms $prms\
