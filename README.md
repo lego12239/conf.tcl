@@ -41,6 +41,8 @@ Conf file can include another conf files with syntax:
 
 < FILENAME
 
+Where FILENAME is glob pattern.
+
 ABNF of conf syntax:
 ```
 conf = *(key-value / group / include-stmt / WSP0)
