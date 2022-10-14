@@ -19,16 +19,16 @@ namespace eval conf {
 ######################################################################
 # Load a conf from a file.
 # SYNOPSIS:
-#   load_from_file [-hd STR] [-default_conf STR] FILE_NAME
+#   load_from_file [-hd STR] [-default DICT] FILE_NAME
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default_conf STR
-#       use STR text as a default conf.
+#   -default DICT
+#       use DICT as an initial(default) conf.
 # RETURN:
 #   conf dict
 proc load_from_file {args} {
-	lassign [_opts_parse $args {-hd 1 -default_conf 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
@@ -59,16 +59,16 @@ proc load_from_file {args} {
 
 # Load a conf from an open file handle.
 # SYNOPSIS:
-#   load_from_fh [-hd STR] [-default_conf STR] CHAN
+#   load_from_fh [-hd STR] [-default DICT] CHAN
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default_conf STR
-#       use STR text as a default conf.
+#   -default DICT
+#       use DICT as an initial(default) conf.
 # RETURN:
 #   conf dict
 proc load_from_fh {args} {
-	lassign [_opts_parse $args {-hd 1 -default_conf 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
 	}
@@ -89,12 +89,12 @@ proc load_from_fh {args} {
 
 # Load a conf from a string.
 # SYNOPSIS:
-#   load_from_str [-hd STR] [-default_conf STR] [-s START_IDX] [-e END_IDX] CONF_STR
+#   load_from_str [-hd STR] [-default DICT] [-s START_IDX] [-e END_IDX] CONF_STR
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default_conf STR
-#       use STR text as a default conf.
+#   -default DICT
+#       use DICT as an initial(default) conf.
 #   -s START_IDX
 #       start index for the parsing
 #   -e END_IDX
@@ -102,7 +102,7 @@ proc load_from_fh {args} {
 # RETURN:
 #   conf dict
 proc load_from_str {args} {
-	lassign [_opts_parse $args {-hd 1 -default_conf 1 -s 1 -e 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1 -s 1 -e 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "String must be specified"
 	}
@@ -173,18 +173,7 @@ proc _opts_parse {argslist spec} {
 # prms:
 #  ctx - context
 proc _load {ctx} {
-	if {[dict get $ctx prms -default_conf] ne ""} {
-		if {[catch {load_from_str -hd [dict get $ctx prms -hd]\
-		  [dict get $ctx prms -default_conf]} conf_default]} {
-			error "default conf parse error: $conf_default"\
-			  "default conf parse error: $::errorInfo"\
-			  $::errorCode
-		}
-	} else {
-		set conf_default [dict create]
-	}
-
-	return [_parse ctx $conf_default]
+	return [_parse ctx [dict get $ctx prms -default]]
 }
 
 proc _parse {_ctx conf} {
@@ -297,7 +286,7 @@ proc _parse_list {_ctx} {
 # prms:
 #  prms - a dict with parameters:
 #         -hd - hierarchy delimiter
-#         -default_conf - a string with a default conf
+#         -default - a string with a default conf
 #         -s  - start offset for src str(only for gets_from_str)
 #         -e  - last offset for src str(only for gets_from_str)
 # ret:
@@ -310,7 +299,7 @@ proc _parse_list {_ctx} {
 proc _ctx_mk {{prms ""}} {
 	set prms_def [dict create\
 	  -hd ""\
-	  -default_conf ""]
+	  -default ""]
 	set prms [dict merge $prms_def $prms]
 
 	return [dict create\
