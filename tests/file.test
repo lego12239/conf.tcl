@@ -66,4 +66,11 @@ tcltest::test file-4.3 {
 	return $conf
 } -result {k v g1 {k2 v2 g1 {k3 v3 k2 v22 g1 {k3 v3} k4 v4} k5 v55} k5 v5}
 
+tcltest::test file-4.4 {
+	read conf from a file with nested include statements (with subsection) and -path
+} -body {
+	set conf [conf::load_from_file -hd . -path incl test_incl.6.conf]
+	return $conf
+} -result {k v gg {p1 V1 p2 V2 p3 V3 p4 V4 p5 V5 s1 {p6 V6} p7 V7} k5 v5}
+
 tcltest::cleanupTests
