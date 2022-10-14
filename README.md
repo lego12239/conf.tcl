@@ -37,15 +37,20 @@ then the entire key, value or section name must be enclosed in double quotes.
 In this case, if double quotes appears inside the value, it must be escaped
 with a backslash(\).
 
+Conf file can include another conf files with syntax:
+
+< FILENAME
+
 ABNF of conf syntax:
 ```
-conf = *(key-value / group / WSP0)
+conf = *(key-value / group / include-stmt / WSP0)
 key-value = key "=" (value / list)
 key = word / str
 value = word / str
 list = WSP0 "{" *((word / str / list) WSP) "}"
 group = ("[" (word / str) "]" *conf) /
         ((word / str) "{" *conf "}")
+include-stmt = "<" WSP0 word
 word = WSP0 (%d33 / %d36-60 / %d62-90 / %d92 / %d94-122 / %d124 / %d126 - %d255) WSP0
         ; all except any space (belong to [:space:] char class), =, #, ",
         ; [, ], {, }
