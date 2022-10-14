@@ -38,4 +38,25 @@ tcltest::test file-3.1 {
 	return $conf
 } -result {k5 v5 kdef vdef k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4}}
 
+tcltest::test file-4.0 {
+	read conf from a file with include statement
+} -body {
+	set conf [conf::load_from_file -hd . test_incl.1.conf]
+	return $conf
+} -result {k2 v2 k5 v5 k v}
+
+tcltest::test file-4.1 {
+	read conf from a file with include statement (with subsection)
+} -body {
+	set conf [conf::load_from_file -hd . test_incl.2.conf]
+	return $conf
+} -result {k v g1 {k2 v2 g1 {k3 v3} k5 v55} k5 v5}
+
+tcltest::test file-4.2 {
+	read conf from a file with nested include statements (with subsection)
+} -body {
+	set conf [conf::load_from_file -hd . test_incl.3.conf]
+	return $conf
+} -result {k v g1 {k2 v2 g1 {k3 v3 k2 v22 g1 {k3 v3} k4 v4} k5 v55} k5 v5}
+
 tcltest::cleanupTests
