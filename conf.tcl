@@ -234,20 +234,24 @@ proc __parse {_ctx conf} {
 			_toks_drop ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "8 6 "]} {
-			set fh [open "[dict get $ctx prms -path][_toks_str ctx 1]"]
-			set src [dict create\
-			  src $fh\
-			  gets_r [namespace current]::gets_from_fh]
-			_ctx_src_push ctx $src
-			set err ""
-			if {[catch {_parse ctx $conf} conf]} {
-				set err $conf
-			}
-			_ctx_src_pop ctx
-			close $fh
+			set fnames [lsort [glob -directory [dict get $ctx prms -path]\
+			  [_toks_str ctx 1]]]
 			_toks_drop ctx 2
-			if {$err ne ""} {
-				error $err $::errorInfo $::errorCode
+			foreach fname $fnames {
+				set fh [open $fname]
+				set src [dict create\
+				  src $fh\
+				  gets_r [namespace current]::gets_from_fh]
+				_ctx_src_push ctx $src
+				set err ""
+				if {[catch {_parse ctx $conf} conf]} {
+					set err $conf
+				}
+				_ctx_src_pop ctx
+				close $fh
+				if {$err ne ""} {
+					error $err $::errorInfo $::errorCode
+				}
 			}
 #			puts "sect: [dict get $ctx sect]"
 		} else {
