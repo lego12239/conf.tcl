@@ -143,30 +143,30 @@ proc load_from_str {args} {
 #  _opts_parse "-dval -t 7 -- fname q" {-dval 0 -D 1 -t 1}
 #
 proc _opts_parse {argslist spec} {
-        set opts [dict create]
+	set opts [dict create]
 
-        for {set i 0} {$i < [llength $argslist]} {incr i} {
-                set lex [lindex $argslist $i]
-                if {![string equal -length 1 $lex "-"]} {
-                        break
-                }
-                if {$lex eq "--"} {
-                        incr i
-                        break
-                }
-                if {![dict exists $spec $lex]} {
-                        error "wrong option: $lex"
-                }
-                set val [dict get $spec $lex]
-                if {[lindex $val 0]} {
-                        incr i
-                        dict set opts $lex [lindex $argslist $i]
-                } else {
-                        dict incr opts $lex
-                }
-        }
+	for {set i 0} {$i < [llength $argslist]} {incr i} {
+		set lex [lindex $argslist $i]
+		if {![string equal -length 1 $lex "-"]} {
+			break
+		}
+		if {$lex eq "--"} {
+			incr i
+			break
+		}
+		if {![dict exists $spec $lex]} {
+			error "wrong option: $lex"
+		}
+		set val [dict get $spec $lex]
+		if {[lindex $val 0]} {
+			incr i
+			dict set opts $lex [lindex $argslist $i]
+		} else {
+			dict incr opts $lex
+		}
+	}
 
-        return [list $opts $i]
+	return [list $opts $i]
 }
 
 # Start a parsing.
