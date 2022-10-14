@@ -180,8 +180,13 @@ proc _load {ctx} {
 		set conf_default [dict create]
 	}
 
+	return [_parse ctx $conf_default]
+}
+
+proc _parse {_ctx conf} {
+	upvar $_ctx ctx
 	set err ""
-	if {[catch {_parse ctx $conf_default} conf]} {
+	if {[catch {__parse ctx $conf} conf]} {
 		if {$::errorCode ne "CONFERR"} {
 			if {[dict get $ctx src lineno_tok] != 0} {
 				set err "conf lines: from [_toks_lineno ctx 0] to [dict get $ctx src lineno_tok]"
@@ -203,7 +208,7 @@ proc _load {ctx} {
 	return $conf
 }
 
-proc _parse {_ctx conf} {
+proc __parse {_ctx conf} {
 	upvar $_ctx ctx
 	# cache a sect value
 	set sect [lindex [dict get $ctx sect] end]
@@ -227,6 +232,23 @@ proc _parse {_ctx conf} {
 		} elseif {[_toks_match ctx "3 "]} {
 			_sect_pop ctx 1
 			_toks_drop ctx 1
+#			puts "sect: [dict get $ctx sect]"
+		} elseif {[_toks_match ctx "8 6 "]} {
+			set fh [open [_toks_str ctx 1]]
+			set src [dict create\
+			  src $fh\
+			  gets_r [namespace current]::gets_from_fh]
+			_ctx_src_push ctx $src
+			set err ""
+			if {[catch {_parse ctx $conf} conf]} {
+				set err $conf
+			}
+			_ctx_src_pop ctx
+			close $fh
+			_toks_drop ctx 2
+			if {$err ne ""} {
+				error $err $::errorInfo $::errorCode
+			}
 #			puts "sect: [dict get $ctx sect]"
 		} else {
 			error "parse error at [dict get $ctx src lineno_tok] line:\
@@ -489,6 +511,7 @@ proc _toks_dump {_ctx} {
 #  5 - ]
 #  6 - word/string
 #  7 - USED INTERNALLY(for string)!
+#  8 - <
 proc _get_tok {_ctx} {
 	upvar $_ctx ctx
 	set tok -1
@@ -501,6 +524,9 @@ proc _get_tok {_ctx} {
 			}
 			{^=} {
 				set tok 1
+			}
+			{^<} {
+				set tok 8
 			}
 			{^#[^\n]*} {
 				_biteoff_buf ctx [string length [lindex $mstr 0]]
