@@ -1,3 +1,19 @@
 - add save routines
 - add spec param to save routines? spec will be used to specifying nested levels and
   values types.
+- check ret val after while from _toks_get inside _parse. If it is equal to -1,
+  then throw an error(may be after this we can remove a part of error related
+  code from _load proc).
+- remove markdown from README.md. Convert it to plain text.
+- add syntax section to README(without ABNF).
+- add boolean support(yes/no, true/false, enable/disable without quotes).(Already
+  exists?)
+- make -hd by default "."?
+- add callback for each kv?
+- add -path and -root for file path checking
+- add KEY < FILENAME for reading a value from a file
+- write a README.html
+- accept conf defaults with -conf opt?
+- add +=
+- add ?= ?
+- add .= ?
