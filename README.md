@@ -49,7 +49,7 @@ conf = *(key-value / group / include-stmt / WSP0)
 key-value = key "=" (value / list)
 key = word / str
 value = word / str
-list = WSP0 "{" *((word / str / list) WSP) "}"
+list = WSP0 "[" *((word / str / list) WSP) "]"
 group = ("[" (word / str) "]" *conf) /
         ((word / str) "{" *conf "}")
 include-stmt = "<" WSP0 word
@@ -135,10 +135,10 @@ many
 lines"
 k3 =
 	"val with \" inside"
-k4 = {
-	{many values}
-	{inside list}
-	{for one key}}
+k4 = [
+	[many values]
+	[inside list]
+	[for one key]]
 ```
 loaded with `load_from_file my.conf` returns:
 
@@ -190,7 +190,7 @@ g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2}
 Conf monster
 ------------
 ```
-g1.k1 = {1 2 3 {4 5}}
+g1.k1 = [1 2 3 [4 5]]
 [g2]
 k2 = v2
 k3.k4 = v3
