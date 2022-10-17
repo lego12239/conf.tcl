@@ -258,7 +258,7 @@ proc __parse {_ctx conf} {
 			error "parse error at [dict get $ctx src lineno_tok] line:\
 			  unexpected token sequence at [_toks_lineno ctx 0] line:\
 			  [_toks_dump ctx]\n\
-			  want: KEY = VAL or KEY = \{ or GROUP_NAME \{ or \} or\
+			  want: KEY = VAL or KEY = \[ or GROUP_NAME \{ or \} or\
 			  \[GROUP_NAME\]" "" CONFERR
 		}
 	}
@@ -286,7 +286,7 @@ proc _parse_list {_ctx} {
 			error "parse error at [dict get $ctx src lineno_tok] line:\
 			  unexpected token sequence at [_toks_lineno ctx 0] line:\
 			  [_toks_dump ctx]\n\
-			  want: VAL or \} or \{" "" CONFERR
+			  want: VAL or \[ or \]" "" CONFERR
 		}
 	}
 
