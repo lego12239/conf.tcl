@@ -217,7 +217,7 @@ proc __parse {_ctx conf} {
 		if {[_toks_match ctx "6 1 6 "]} {
 			_conf_kv_set ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
 			_toks_drop ctx 3
-		} elseif {[_toks_match ctx "6 1 2 "]} {
+		} elseif {[_toks_match ctx "6 1 4 "]} {
 			set name [_toks_str ctx 0]
 			_toks_drop ctx 3
 			_conf_kv_set ctx conf $name [_parse_list ctx]
@@ -276,10 +276,10 @@ proc _parse_list {_ctx} {
 		if {[_toks_match ctx "6 "]} {
 			lappend list [_toks_str ctx 0]
 			_toks_drop ctx 1
-		} elseif {[_toks_match ctx "2 "]} {
+		} elseif {[_toks_match ctx "4 "]} {
 			_toks_drop ctx 1
 			lappend list [_parse_list ctx]
-		} elseif {[_toks_match ctx "3 "]} {
+		} elseif {[_toks_match ctx "5 "]} {
 			_toks_drop ctx 1
 			break
 		} else {
