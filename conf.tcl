@@ -215,7 +215,7 @@ proc __parse {_ctx conf} {
 
 	while {[_toks_get ctx 3] > 0} {
 		if {[_toks_match ctx "6 1 6 "]} {
-			_conf_kv_set ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
+			_conf_kv_set ctx conf [_toks_str ctx 0] [list [_toks_str ctx 2]]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 1 4 "]} {
 			set name [_toks_str ctx 0]
@@ -409,18 +409,18 @@ proc _sect_get {_ctx} {
 	return [join [lindex [dict get $ctx sect] end]]
 }
 
-# Assign a specified value to a specified name
+# Assign a specified values list to a specified name
 # prms:
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
-#  val  - a conf parameter value
-proc _conf_kv_set {_ctx _conf name val} {
+#  vlist  - a conf parameter values list
+proc _conf_kv_set {_ctx _conf name vlist} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
-	dict set conf {*}$names $val
+	dict set conf {*}$names $vlist
 }
 
 # Get list of names from supplied str by splitting it on hd char sequence.
