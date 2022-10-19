@@ -217,10 +217,18 @@ proc __parse {_ctx conf} {
 		if {[_toks_match ctx "6 1 6 "]} {
 			_conf_kv_set ctx conf [_toks_str ctx 0] [list [_toks_str ctx 2]]
 			_toks_drop ctx 3
+		} elseif {[_toks_match ctx "6 9 6 "]} {
+			_conf_kv_append ctx conf [_toks_str ctx 0]\
+			  [list [_toks_str ctx 2]]
+			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 1 4 "]} {
 			set name [_toks_str ctx 0]
 			_toks_drop ctx 3
 			_conf_kv_set ctx conf $name [_parse_list ctx]
+		} elseif {[_toks_match ctx "6 9 4 "]} {
+			set name [_toks_str ctx 0]
+			_toks_drop ctx 3
+			_conf_kv_append ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "4 6 5 "]} {
 			_sect_push ctx 0 [_toks_str ctx 1]
 			_toks_drop ctx 3
@@ -423,6 +431,23 @@ proc _conf_kv_set {_ctx _conf name vlist} {
 	dict set conf {*}$names $vlist
 }
 
+# Append a specified values list to a specified name
+# prms:
+#  _ctx - ctx var name
+#  name - a conf parameter name(string)
+#  vlist  - a conf parameter values list
+proc _conf_kv_append {_ctx _conf name vlist} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	set names [_sect_get ctx]
+	lappend names {*}[_mk_name ctx $name]
+	if {[dict exists $conf {*}$names]} {
+		set vlist [list {*}[dict get $conf {*}$names] {*}$vlist]
+	}
+	dict set conf {*}$names $vlist
+}
+
 # Get list of names from supplied str by splitting it on hd char sequence.
 # If hd is empty string, then use supplied str as is.
 # E.g.(ctx with hd set to "->"):
@@ -521,6 +546,7 @@ proc _toks_dump {_ctx} {
 #  6 - word/string
 #  7 - USED INTERNALLY(for string)!
 #  8 - <
+#  9 - +=
 proc _get_tok {_ctx} {
 	upvar $_ctx ctx
 	set tok -1
@@ -530,6 +556,9 @@ proc _get_tok {_ctx} {
 		switch -regexp -matchvar mstr [dict get $ctx src buf] {
 			{^\s+} {
 				_biteoff_buf ctx [string length [lindex $mstr 0]]
+			}
+			{^\+=} {
+				set tok 9
 			}
 			{^=} {
 				set tok 1
