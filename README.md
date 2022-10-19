@@ -6,8 +6,8 @@ conf package contains 3 main routines for text configuration file loading:
 * conf::load_from_str - to load a conf from a string
 
 Each routine returns a parsed conf as a dict. Single word/string value is
-saved into this dict as a list with one element. On error an exception is
-thrown.
+saved into this dict as a list with one element. Thus every value is a
+list(with one or more elements). On error an exception is thrown.
 
 Synopsis
 ========
