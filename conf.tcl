@@ -221,6 +221,10 @@ proc __parse {_ctx conf} {
 			_conf_kv_append ctx conf [_toks_str ctx 0]\
 			  [list [_toks_str ctx 2]]
 			_toks_drop ctx 3
+		} elseif {[_toks_match ctx "6 10 6 "]} {
+			_conf_kv_set_if_not_exist ctx conf [_toks_str ctx 0]\
+			  [list [_toks_str ctx 2]]
+			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 1 4 "]} {
 			set name [_toks_str ctx 0]
 			_toks_drop ctx 3
@@ -229,6 +233,10 @@ proc __parse {_ctx conf} {
 			set name [_toks_str ctx 0]
 			_toks_drop ctx 3
 			_conf_kv_append ctx conf $name [_parse_list ctx]
+		} elseif {[_toks_match ctx "6 10 4 "]} {
+			set name [_toks_str ctx 0]
+			_toks_drop ctx 3
+			_conf_kv_set_if_not_exist ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "4 6 5 "]} {
 			_sect_push ctx 0 [_toks_str ctx 1]
 			_toks_drop ctx 3
@@ -442,6 +450,25 @@ proc _conf_kv_set {_ctx _conf name vlist} {
 	dict set ctx cspec {*}$names .
 }
 
+# Assign a specified values list to a specified name if it's not exist.
+# prms:
+#  _ctx - ctx var name
+#  name - a conf parameter name(string)
+#  vlist  - a conf parameter values list
+proc _conf_kv_set_if_not_exist {_ctx _conf name vlist} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	set names [_sect_get ctx]
+	lappend names {*}[_mk_name ctx $name]
+	set ret [_conf_key_existence [dict get $ctx cspec] $names]
+	if {$ret != -1} {
+		return
+	}
+	dict set conf {*}$names $vlist
+	dict set ctx cspec {*}$names .
+}
+
 # Append a specified values list to a specified name
 # prms:
 #  _ctx - ctx var name
@@ -625,6 +652,7 @@ proc _toks_dump {_ctx} {
 #  7 - USED INTERNALLY(for string)!
 #  8 - <
 #  9 - +=
+#  10 - ?=
 proc _get_tok {_ctx} {
 	upvar $_ctx ctx
 	set tok -1
@@ -637,6 +665,9 @@ proc _get_tok {_ctx} {
 			}
 			{^\+=} {
 				set tok 9
+			}
+			{^\?=} {
+				set tok 10
 			}
 			{^=} {
 				set tok 1
@@ -659,7 +690,7 @@ proc _get_tok {_ctx} {
 			{^\]} {
 				set tok 5
 			}
-			{^[^\]\[[:space:]=#"{}+]+} {
+			{^[^\]\[[:space:]=#"{}+?]+} {
 				set tok 6
 			}
 			{^"([^"\\]+|\\.|)+"} {
