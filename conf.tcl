@@ -450,13 +450,26 @@ proc _conf_kv_set {_ctx _conf name vlist} {
 proc _conf_kv_append {_ctx _conf name vlist} {
 	upvar $_ctx ctx
 	upvar $_conf conf
+	set enames ""
 
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
-	if {[dict exists $conf {*}$names]} {
+	# Protect from reassign mistakes. See _conf_kv_set proc for the
+	# explanation.
+	set ret [_conf_key_existence [dict get $ctx cspec] $names enames]
+	if {$ret == -2} {
+		dict set conf {*}$enames ""
+		dict set ctx cspec {*}$enames ""
+	} elseif {$ret == 1} {
+		# This isn't actually needed, becase {*}$names key will replaced
+		# with new value in any case.
+		dict set conf {*}$names ""
+		dict set ctx cspec {*}$names ""
+	} elseif {$ret == 0} {
 		set vlist [list {*}[dict get $conf {*}$names] {*}$vlist]
 	}
 	dict set conf {*}$names $vlist
+	dict set ctx cspec {*}$names .
 }
 
 # Return key existence state.
