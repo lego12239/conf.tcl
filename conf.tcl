@@ -328,6 +328,7 @@ proc _ctx_mk {{prms ""}} {
 
 	return [dict create\
 	  prms $prms\
+	  cspec [dict create]\
 	  src [dict create]\
 	  srcs [list]\
 	  sect [list]\
@@ -425,10 +426,20 @@ proc _sect_get {_ctx} {
 proc _conf_kv_set {_ctx _conf name vlist} {
 	upvar $_ctx ctx
 	upvar $_conf conf
+	set enames ""
 
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
+	# Protect from a case where we assign to an existing key as if it would
+	# be a section. E.g. "k1=\[k2 v2 k4 v4\] k1.k4=v44" config can
+	# mistakenly got {k1 {k2 v2 k4 v44}} instead of {k1 {k4 v44}}.
+	set ret [_conf_key_existence [dict get $ctx cspec] $names enames]
+	if {$ret == -2} {
+		dict set conf {*}$enames ""
+		dict set ctx cspec {*}$enames ""
+	}
 	dict set conf {*}$names $vlist
+	dict set ctx cspec {*}$names .
 }
 
 # Append a specified values list to a specified name
@@ -446,6 +457,60 @@ proc _conf_kv_append {_ctx _conf name vlist} {
 		set vlist [list {*}[dict get $conf {*}$names] {*}$vlist]
 	}
 	dict set conf {*}$names $vlist
+}
+
+# Return key existence state.
+# prms:
+#  spec   - specification of some dict, where key is a key and
+#           a leaf value is a dot
+#  names  - a key full path(keys separated by spaces)
+#  _enames - a variable name to save existent part of key path for -2 ret code
+# ret:
+#  -2 - specified key doesn't exists and some predecessor key is a leaf key
+#  -1 - specified key doesn't exists
+#   0 - specified key exists and it is a leaf key
+#   1 - specified key exists, but it is not a leaf key
+#
+# E.g. we have a dict:
+#  k1 {k2 {k3 "some data"}}
+# A dict spec for this dict is:
+#  set d [dict create k1 {k2 {k3 .}}]
+# So:
+# % _conf_key_existence $d {k1 k2 k3 k4}
+# -2
+# % _conf_key_existence $d {k1 k4}
+# -1
+# % _conf_key_existence $d {k1 k2 k3}
+# 0
+# % _conf_key_existence $d {k1 k2}
+# 1
+proc _conf_key_existence {spec names {_enames ""}} {
+	set v $spec
+
+	set len [llength $names]
+	incr len -1
+	for {set i 0} {$i <= $len} {incr i} {
+		set k [lindex $names $i]
+		if {![dict exists $v $k]} {
+			return -1
+		}
+		set v [dict get $v $k]
+		if {$i < $len} {
+			if {$v eq "."} {
+				if {$_enames ne ""} {
+					upvar $_enames enames
+					set enames [lrange $names 0 $i]
+				}
+				return -2
+			}
+		} else {
+			if {$v ne "."} {
+				return 1
+			}
+		}
+	}
+
+	return 0
 }
 
 # Get list of names from supplied str by splitting it on hd char sequence.
