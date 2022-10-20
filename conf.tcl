@@ -215,28 +215,27 @@ proc __parse {_ctx conf} {
 
 	while {[_toks_get ctx 3] > 0} {
 		if {[_toks_match ctx "6 1 6 "]} {
-			_conf_kv_set ctx conf [_toks_str ctx 0] [list [_toks_str ctx 2]]
+			_conf_kv_set ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 9 6 "]} {
-			_conf_kv_append ctx conf [_toks_str ctx 0]\
-			  [list [_toks_str ctx 2]]
+			_conf_kv_append ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 10 6 "]} {
 			_conf_kv_set_if_not_exist ctx conf [_toks_str ctx 0]\
-			  [list [_toks_str ctx 2]]
+			  [_toks_str ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 1 4 "]} {
 			set name [_toks_str ctx 0]
 			_toks_drop ctx 3
-			_conf_kv_set ctx conf $name [_parse_list ctx]
+			_conf_kv_set_list ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "6 9 4 "]} {
 			set name [_toks_str ctx 0]
 			_toks_drop ctx 3
-			_conf_kv_append ctx conf $name [_parse_list ctx]
+			_conf_kv_append_list ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "6 10 4 "]} {
 			set name [_toks_str ctx 0]
 			_toks_drop ctx 3
-			_conf_kv_set_if_not_exist ctx conf $name [_parse_list ctx]
+			_conf_kv_set_list_if_not_exist ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "4 6 5 "]} {
 			_sect_push ctx 0 [_toks_str ctx 1]
 			_toks_drop ctx 3
@@ -426,12 +425,24 @@ proc _sect_get {_ctx} {
 	return [join [lindex [dict get $ctx sect] end]]
 }
 
+# Assign a specified value to a specified name
+# prms:
+#  _ctx - ctx var name
+#  name - a conf parameter name(string)
+#  value  - a conf parameter value
+proc _conf_kv_set {_ctx _conf name value} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	_conf_kv_set_list ctx conf $name [list $value]
+}
+
 # Assign a specified values list to a specified name
 # prms:
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
 #  vlist  - a conf parameter values list
-proc _conf_kv_set {_ctx _conf name vlist} {
+proc _conf_kv_set_list {_ctx _conf name vlist} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 	set enames ""
@@ -450,12 +461,24 @@ proc _conf_kv_set {_ctx _conf name vlist} {
 	dict set ctx cspec {*}$names .
 }
 
+# Assign a specified value to a specified name if it's not exist.
+# prms:
+#  _ctx - ctx var name
+#  name - a conf parameter name(string)
+#  value  - a conf parameter value
+proc _conf_kv_set_if_not_exist {_ctx _conf name value} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	_conf_kv_set_list_if_not_exist ctx conf $name [list $value]
+}
+
 # Assign a specified values list to a specified name if it's not exist.
 # prms:
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
 #  vlist  - a conf parameter values list
-proc _conf_kv_set_if_not_exist {_ctx _conf name vlist} {
+proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
@@ -469,12 +492,24 @@ proc _conf_kv_set_if_not_exist {_ctx _conf name vlist} {
 	dict set ctx cspec {*}$names .
 }
 
+# Append a specified value to a specified name
+# prms:
+#  _ctx - ctx var name
+#  name - a conf parameter name(string)
+#  value  - a conf parameter value
+proc _conf_kv_append {_ctx _conf name value} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	_conf_kv_append_list ctx conf $name [list $value]
+}
+
 # Append a specified values list to a specified name
 # prms:
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
 #  vlist  - a conf parameter values list
-proc _conf_kv_append {_ctx _conf name vlist} {
+proc _conf_kv_append_list {_ctx _conf name vlist} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 	set enames ""
