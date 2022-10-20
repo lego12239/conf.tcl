@@ -84,4 +84,34 @@ tcltest::test kvlist-2.5 {
 	k1 += v8"
 } -result "k1 {v1 v7 v8}"
 
+tcltest::test kvlist-3.0 {
+	key value pair and ?=
+} -body {
+	conf::load_from_str -hd . "k1=\[k2 v2 k4 v4\] k1.k4?=\[v44 v45\]"
+} -result {k1 {k2 v2 k4 v4}}
+
+tcltest::test kvlist-3.0.1 {
+	key value pair and ?=
+} -body {
+	conf::load_from_str -hd . "k1=\"k2 v2 k4 v4\" k1.k4?=\[v44 v45\]"
+} -result {k1 {{k2 v2 k4 v4}}}
+
+tcltest::test kvlist-3.1 {
+	key value pair and ?=
+} -body {
+	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k4?=\[v44 v45\]"
+} -result {k1 {k2 v2 k3 v3 k4 {v44 v45}}}
+
+tcltest::test kvlist-3.2 {
+	key value pair and ?=
+} -body {
+	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k2?=\[v44 v45\]"
+} -result {k1 {k2 v2 k3 v3}}
+
+tcltest::test kvlist-3.3 {
+	key value pair and ?=
+} -body {
+	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1 ?= \[v44 v45\]"
+} -result {k1 {k2 v2 k3 v3}}
+
 tcltest::cleanupTests
