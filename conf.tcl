@@ -46,7 +46,7 @@ proc load_from_file {args} {
 	_ctx_src_push ctx $src
 
 	set err ""
-	if {[catch {_load $ctx} conf]} {
+	if {[catch {_load ctx} conf]} {
 		set err [list $conf $::errorInfo $::errorCode]
 	}
 
@@ -85,7 +85,7 @@ proc load_from_fh {args} {
 
 	set ctx [_ctx_mk $opts]
 	_ctx_src_push ctx $src
-	set conf [_load $ctx]
+	set conf [_load ctx]
 	_ctx_src_pop ctx
 
 	return $conf
@@ -128,7 +128,7 @@ proc load_from_str {args} {
 	set ctx [_ctx_mk $opts]
 	_ctx_src_push ctx $src
 #	puts "CTX: $ctx"
-	set conf [_load $ctx]
+	set conf [_load ctx]
 	_ctx_src_pop ctx
 
 	return $conf
@@ -179,7 +179,8 @@ proc _opts_parse {argslist spec} {
 # Start a parsing.
 # prms:
 #  ctx - context
-proc _load {ctx} {
+proc _load {_ctx} {
+	upvar $_ctx ctx
 	return [_parse ctx [dict get $ctx prms -default]]
 }
 
