@@ -19,7 +19,8 @@ namespace eval conf {
 ######################################################################
 # Load a conf from a file.
 # SYNOPSIS:
-#   load_from_file [-hd STR] [-default DICT] [-path STR] FILE_NAME
+#   load_from_file [-hd STR] [-default DICT] [-path STR] [-cb CB_AND_PRIV]
+#     FILE_NAME
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
@@ -27,10 +28,15 @@ namespace eval conf {
 #       use DICT as an initial(default) conf.
 #   -path STR
 #       use STR as file path prefix for every included file
+#   -cb CB_AND_PRIV
+#       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
+#       proc as value set/append callback; and specified PRIV will be
+#       used as initial value for priv in a context.
 # RETURN:
-#   conf dict
+#   CONF_DICT   - dict with conf parameters
+#   {CONF_DICT PRIV} - dict with conf parameters and priv
 proc load_from_file {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1 -path 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
@@ -56,12 +62,15 @@ proc load_from_file {args} {
 	if {$err ne ""} {
 		error {*}$err
 	}
+	if {[dict exists $opts -cb]} {
+		return [list $conf [dict get $ctx priv]]
+	}
 	return $conf
 }
 
 # Load a conf from an open file handle.
 # SYNOPSIS:
-#   load_from_fh [-hd STR] [-default DICT] [-path STR] CHAN
+#   load_from_fh [-hd STR] [-default DICT] [-path STR] [-cb CB_AND_PRIV] CHAN
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
@@ -69,10 +78,15 @@ proc load_from_file {args} {
 #       use DICT as an initial(default) conf.
 #   -path STR
 #       use STR as file path prefix for every included file
+#   -cb CB_AND_PRIV
+#       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
+#       proc as value set/append callback; and specified PRIV will be
+#       used as initial value for priv in a context.
 # RETURN:
-#   conf dict
+#   CONF_DICT   - dict with conf parameters
+#   {CONF_DICT PRIV} - dict with conf parameters and priv
 proc load_from_fh {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1 -path 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1}] opts idx
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
 	}
@@ -88,13 +102,16 @@ proc load_from_fh {args} {
 	set conf [_load ctx]
 	_ctx_src_pop ctx
 
+	if {[dict exists $opts -cb]} {
+		return [list $conf [dict get $ctx priv]]
+	}
 	return $conf
 }
 
 # Load a conf from a string.
 # SYNOPSIS:
-#   load_from_str [-hd STR] [-default DICT] [-path STR] [-s START_IDX]
-#     [-e END_IDX] CONF_STR
+#   load_from_str [-hd STR] [-default DICT] [-path STR] [-cb CB_AND_PRIV]
+#     [-s START_IDX] [-e END_IDX] CONF_STR
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
@@ -102,14 +119,20 @@ proc load_from_fh {args} {
 #       use DICT as an initial(default) conf.
 #   -path STR
 #       use STR as file path prefix for every included file
+#   -cb CB_AND_PRIV
+#       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
+#       proc as value set/append callback; and specified PRIV will be
+#       used as initial value for priv in a context.
 #   -s START_IDX
 #       start index for the parsing
 #   -e END_IDX
 #       end index for the parsing(including char at this idx)
 # RETURN:
-#   conf dict
+#   CONF_DICT   - dict with conf parameters
+#   {CONF_DICT PRIV} - dict with conf parameters and priv
 proc load_from_str {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -s 1 -e 1}] opts idx
+	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1 -s 1 -e 1}]\
+	  opts idx
 	if {$idx >= [llength $args]} {
 		error "String must be specified"
 	}
@@ -131,6 +154,9 @@ proc load_from_str {args} {
 	set conf [_load ctx]
 	_ctx_src_pop ctx
 
+	if {[dict exists $opts -cb]} {
+		return [list $conf [dict get $ctx priv]]
+	}
 	return $conf
 }
 
@@ -315,6 +341,7 @@ proc _parse_list {_ctx} {
 #         -hd - hierarchy delimiter
 #         -default - a string with a default conf
 #         -path    - a string with a default file path prefix
+#         -cb      - a value set/append callback
 #         -s  - start offset for src str(only for gets_from_str)
 #         -e  - last offset for src str(only for gets_from_str)
 # ret:
@@ -328,14 +355,19 @@ proc _ctx_mk {{prms ""}} {
 	set prms_def [dict create\
 	  -hd ""\
 	  -default ""\
-	  -path "./"]
+	  -path "./"\
+	  -cb ""]
 	set prms [dict merge $prms_def $prms]
 	if {[string index [dict get $prms -path] end] ne "/"} {
 		dict append prms -path "/"
 	}
+	set cb [lindex [dict get $prms -cb] 0]
+	set priv [lindex [dict get $prms -cb] 1]
 
 	return [dict create\
 	  prms $prms\
+	  cb $cb\
+	  priv $priv\
 	  cspec [dict create]\
 	  src [dict create]\
 	  srcs [list]\
@@ -435,7 +467,7 @@ proc _conf_kv_set {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_set_list ctx conf $name [list $value]
+	_conf_kv_set_list ctx conf $name [list $value] "=S"
 }
 
 # Assign a specified values list to a specified name
@@ -443,13 +475,19 @@ proc _conf_kv_set {_ctx _conf name value} {
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
 #  vlist  - a conf parameter values list
-proc _conf_kv_set_list {_ctx _conf name vlist} {
+proc _conf_kv_set_list {_ctx _conf name vlist {op "=L"}} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 	set enames ""
 
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
+	if {[dict get $ctx cb] ne ""} {
+		set ret [[dict get $ctx cb] ctx conf $op names vlist]
+		if {$ret != 0} {
+			return
+		}
+	}
 	# Protect from a case where we assign to an existing key as if it would
 	# be a section. E.g. "k1=\[k2 v2 k4 v4\] k1.k4=v44" config can
 	# mistakenly got {k1 {k2 v2 k4 v44}} instead of {k1 {k4 v44}}.
@@ -471,7 +509,7 @@ proc _conf_kv_set_if_not_exist {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_set_list_if_not_exist ctx conf $name [list $value]
+	_conf_kv_set_list_if_not_exist ctx conf $name [list $value] "?=S"
 }
 
 # Assign a specified values list to a specified name if it's not exist.
@@ -479,12 +517,18 @@ proc _conf_kv_set_if_not_exist {_ctx _conf name value} {
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
 #  vlist  - a conf parameter values list
-proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist} {
+proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist {op "?=L"}} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
+	if {[dict get $ctx cb] ne ""} {
+		set ret [[dict get $ctx cb] ctx conf $op names vlist]
+		if {$ret != 0} {
+			return
+		}
+	}
 	set ret [_conf_key_existence [dict get $ctx cspec] $names]
 	if {$ret != -1} {
 		return
@@ -502,7 +546,7 @@ proc _conf_kv_append {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_append_list ctx conf $name [list $value]
+	_conf_kv_append_list ctx conf $name [list $value] "+=S"
 }
 
 # Append a specified values list to a specified name
@@ -510,13 +554,19 @@ proc _conf_kv_append {_ctx _conf name value} {
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
 #  vlist  - a conf parameter values list
-proc _conf_kv_append_list {_ctx _conf name vlist} {
+proc _conf_kv_append_list {_ctx _conf name vlist {op "+=L"}} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 	set enames ""
 
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
+	if {[dict get $ctx cb] ne ""} {
+		set ret [[dict get $ctx cb] ctx conf $op names vlist]
+		if {$ret != 0} {
+			return
+		}
+	}
 	# Protect from reassign mistakes. See _conf_kv_set proc for the
 	# explanation.
 	set ret [_conf_key_existence [dict get $ctx cspec] $names enames]
