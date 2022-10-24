@@ -33,8 +33,9 @@ namespace eval conf {
 #       proc as value set/append callback; and specified PRIV will be
 #       used as initial value for priv in a context.
 # RETURN:
-#   CONF_DICT   - dict with conf parameters
-#   {CONF_DICT PRIV} - dict with conf parameters and priv
+#   {CONF_DICT CSPEC}   - dict with conf parameters, conf dict specification
+#   {CONF_DICT CSPEC PRIV} - dict with conf parameters, conf dict
+#                            specification and priv
 proc load_from_file {args} {
 	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1}] opts idx
 	if {$idx >= [llength $args]} {
@@ -63,9 +64,9 @@ proc load_from_file {args} {
 		error {*}$err
 	}
 	if {[dict exists $opts -cb]} {
-		return [list $conf [dict get $ctx priv]]
+		return [list $conf [dict get $ctx cspec] [dict get $ctx priv]]
 	}
-	return $conf
+	return [list $conf [dict get $ctx cspec]]
 }
 
 # Load a conf from an open file handle.
@@ -83,8 +84,9 @@ proc load_from_file {args} {
 #       proc as value set/append callback; and specified PRIV will be
 #       used as initial value for priv in a context.
 # RETURN:
-#   CONF_DICT   - dict with conf parameters
-#   {CONF_DICT PRIV} - dict with conf parameters and priv
+#   {CONF_DICT CSPEC}   - dict with conf parameters, conf dict specification
+#   {CONF_DICT CSPEC PRIV} - dict with conf parameters, conf dict
+#                            specification and priv
 proc load_from_fh {args} {
 	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1}] opts idx
 	if {$idx >= [llength $args]} {
@@ -103,9 +105,9 @@ proc load_from_fh {args} {
 	_ctx_src_pop ctx
 
 	if {[dict exists $opts -cb]} {
-		return [list $conf [dict get $ctx priv]]
+		return [list $conf [dict get $ctx cspec] [dict get $ctx priv]]
 	}
-	return $conf
+	return [list $conf [dict get $ctx cspec]]
 }
 
 # Load a conf from a string.
@@ -128,8 +130,9 @@ proc load_from_fh {args} {
 #   -e END_IDX
 #       end index for the parsing(including char at this idx)
 # RETURN:
-#   CONF_DICT   - dict with conf parameters
-#   {CONF_DICT PRIV} - dict with conf parameters and priv
+#   {CONF_DICT CSPEC}   - dict with conf parameters, conf dict specification
+#   {CONF_DICT CSPEC PRIV} - dict with conf parameters, conf dict
+#                            specification and priv
 proc load_from_str {args} {
 	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1 -s 1 -e 1}]\
 	  opts idx
@@ -155,9 +158,9 @@ proc load_from_str {args} {
 	_ctx_src_pop ctx
 
 	if {[dict exists $opts -cb]} {
-		return [list $conf [dict get $ctx priv]]
+		return [list $conf [dict get $ctx cspec] [dict get $ctx priv]]
 	}
-	return $conf
+	return [list $conf [dict get $ctx cspec]]
 }
 
 # Parse options from argslist.
