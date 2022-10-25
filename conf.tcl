@@ -420,7 +420,9 @@ proc _ctx_src_pop {_ctx} {
 proc _sect_push {_ctx type name} {
 	upvar $_ctx ctx
 
-	if {($type == 0) && ([lindex [dict get $ctx sect_type] end] == 0)} {
+	# If previous sect is [] sect, then pop a previous name - we need to
+	# replace it with a new name.
+	if {[lindex [dict get $ctx sect_type] end] == 0} {
 		_sect_pop ctx 0
 	}
 	set sect [lindex [dict get $ctx sect] end]
