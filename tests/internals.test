@@ -76,11 +76,20 @@ tcltest::test internals-4.1 {
 } -result {-1}
 
 tcltest::test internals-4.2 {
-	spec_key_existence ret is 0
+	spec_key_existence ret is 0, S
 } -body {
 	set d [dict create k1 {k2 {k3 S}}]
-	conf::spec_key_existence d {k1 k2 k3}
-} -result {0}
+	set ret [conf::spec_key_existence d {k1 k2 k3} data]
+	return [list $ret $data]
+} -result {0 S}
+
+tcltest::test internals-4.2.1 {
+	spec_key_existence ret is 0, L
+} -body {
+	set d [dict create k1 {k2 {k3 L}}]
+	set ret [conf::spec_key_existence d {k1 k2 k3} data]
+	return [list $ret $data]
+} -result {0 L}
 
 tcltest::test internals-4.3 {
 	spec_key_existence ret is 1
