@@ -53,40 +53,40 @@ tcltest::test internals-3.1 {
 } -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} cspec {} src {gets_r conf::gets_from_str lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src {k1 = v1}} srcs {{}} sect {} sect_type {}}
 
 tcltest::test internals-4.0 {
-	_conf_key_existence ret is -2
+	spec_key_existence ret is -2
 } -body {
-	set d [dict create k1 {k2 {k3 .}}]
-	conf::_conf_key_existence $d {k1 k2 k3 k4}
+	set d [dict create k1 {k2 {k3 S}}]
+	conf::spec_key_existence d {k1 k2 k3 k4}
 } -result {-2}
 
 tcltest::test internals-4.0.1 {
-	_conf_key_existence ret is -2
+	spec_key_existence ret is -2
 } -body {
 	set names ""
-	set d [dict create k1 {k2 {k3 .}}]
-	set ret [conf::_conf_key_existence $d {k1 k2 k3 k4} names]
+	set d [dict create k1 {k2 {k3 S}}]
+	set ret [conf::spec_key_existence d {k1 k2 k3 k4} names]
 	return [list $ret $names]
 } -result {-2 {k1 k2 k3}}
 
 tcltest::test internals-4.1 {
-	_conf_key_existence ret is -1
+	spec_key_existence ret is -1
 } -body {
-	set d [dict create k1 {k2 {k3 .}}]
-	conf::_conf_key_existence $d {k1 k4}
+	set d [dict create k1 {k2 {k3 S}}]
+	conf::spec_key_existence d {k1 k4}
 } -result {-1}
 
 tcltest::test internals-4.2 {
-	_conf_key_existence ret is 0
+	spec_key_existence ret is 0
 } -body {
-	set d [dict create k1 {k2 {k3 .}}]
-	conf::_conf_key_existence $d {k1 k2 k3}
+	set d [dict create k1 {k2 {k3 S}}]
+	conf::spec_key_existence d {k1 k2 k3}
 } -result {0}
 
 tcltest::test internals-4.3 {
-	_conf_key_existence ret is 1
+	spec_key_existence ret is 1
 } -body {
-	set d [dict create k1 {k2 {k3 .}}]
-	conf::_conf_key_existence $d {k1 k2}
+	set d [dict create k1 {k2 {k3 S}}]
+	conf::spec_key_existence d {k1 k2}
 } -result {1}
 
 tcltest::cleanupTests

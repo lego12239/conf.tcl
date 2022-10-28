@@ -6,37 +6,37 @@ tcltest::test str-1.0 {
 	opt -s
 } -body {
 	conf::load_from_str -s 5 "k1=v1 k2=v2"
-} -result {{k2 v2} {k2 .}}
+} -result {{k2 v2} {k2 S}}
 
 tcltest::test str-1.1 {
 	opt -s
 } -body {
 	conf::load_from_str -s 6 "k1=v1 k2=v2"
-} -result {{k2 v2} {k2 .}}
+} -result {{k2 v2} {k2 S}}
 
 tcltest::test str-1.2 {
 	opt -s
 } -body {
 	conf::load_from_str -s 7 "k1=v1 k2=v2"
-} -result {{2 v2} {2 .}}
+} -result {{2 v2} {2 S}}
 
 tcltest::test str-2.0 {
 	opt -e
 } -body {
 	conf::load_from_str -e 3 "k1=v1 k2=v2"
-} -result {{k1 v} {k1 .}}
+} -result {{k1 v} {k1 S}}
 
 tcltest::test str-2.1 {
 	opt -e
 } -body {
 	conf::load_from_str -e 4 "k1=v1 k2=v2"
-} -result {{k1 v1} {k1 .}}
+} -result {{k1 v1} {k1 S}}
 
 tcltest::test str-2.2 {
 	opt -e
 } -body {
 	conf::load_from_str -e 5 "k1=v1 k2=v2"
-} -result {{k1 v1} {k1 .}}
+} -result {{k1 v1} {k1 S}}
 
 tcltest::test str-3.0 {
 	-s > -e
@@ -48,6 +48,6 @@ tcltest::test str-4.2 {
 	opt -e
 } -body {
 	conf::load_from_str -e 5 "k1=v1 k2=v2"
-} -result {{k1 v1} {k1 .}}
+} -result {{k1 v1} {k1 S}}
 
 tcltest::cleanupTests

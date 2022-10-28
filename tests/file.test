@@ -12,13 +12,13 @@ tcltest::test file-2.0 {
 	read conf from a file
 } -body {
 	conf::load_from_file -hd . test.conf
-} -result {{k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4} k5 v5} {k . g1 {k1 . k2 . g2 {g3 {k3 .}} k4 .} k5 .}}
+} -result {{k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4} k5 v5} {k S g1 {k1 L k2 L g2 {g3 {k3 S}} k4 S} k5 S}}
 
 tcltest::test file-2.1 {
 	read conf from a file (-default_conf)
 } -body {
 	conf::load_from_file -hd . -default {k5 def kdef vdef} test.conf
-} -result {{k5 v5 kdef vdef k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4}} {k . g1 {k1 . k2 . g2 {g3 {k3 .}} k4 .} k5 .}}
+} -result {{k5 v5 kdef vdef k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4}} {k S g1 {k1 L k2 L g2 {g3 {k3 S}} k4 S} k5 S}}
 
 tcltest::test file-3.0 {
 	read conf from a file handler
@@ -27,7 +27,7 @@ tcltest::test file-3.0 {
 	set conf [conf::load_from_fh -hd . $fh]
 	close $fh
 	return $conf
-} -result {{k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4} k5 v5} {k . g1 {k1 . k2 . g2 {g3 {k3 .}} k4 .} k5 .}}
+} -result {{k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4} k5 v5} {k S g1 {k1 L k2 L g2 {g3 {k3 S}} k4 S} k5 S}}
 
 tcltest::test file-3.1 {
 	read conf from a file handler (-default_conf)
@@ -36,41 +36,41 @@ tcltest::test file-3.1 {
 	set conf [conf::load_from_fh -hd . -default {k5 def kdef vdef} $fh]
 	close $fh
 	return $conf
-} -result {{k5 v5 kdef vdef k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4}} {k . g1 {k1 . k2 . g2 {g3 {k3 .}} k4 .} k5 .}}
+} -result {{k5 v5 kdef vdef k v g1 {k1 {1 2 {3 4}} k2 {test 2 3} g2 {g3 {k3 v3}} k4 v4}} {k S g1 {k1 L k2 L g2 {g3 {k3 S}} k4 S} k5 S}}
 
 tcltest::test file-4.0 {
 	read conf from a file with include statement
 } -body {
 	set conf [conf::load_from_file -hd . test_incl.1.conf]
 	return $conf
-} -result {{k2 v2 k5 v5 k v} {k2 . k5 . k .}}
+} -result {{k2 v2 k5 v5 k v} {k2 S k5 S k S}}
 
 tcltest::test file-4.1 {
 	read conf from a file with include statement (with subsection)
 } -body {
 	set conf [conf::load_from_file -hd . test_incl.2.conf]
 	return $conf
-} -result {{k v g1 {k2 v2 g1 {k3 v3} k5 v55} k5 v5} {k . g1 {k2 . g1 {k3 .} k5 .} k5 .}}
+} -result {{k v g1 {k2 v2 g1 {k3 v3} k5 v55} k5 v5} {k S g1 {k2 S g1 {k3 S} k5 S} k5 S}}
 
 tcltest::test file-4.2 {
 	read conf from a file with nested include statements (with subsection)
 } -body {
 	set conf [conf::load_from_file -hd . test_incl.3.conf]
 	return $conf
-} -result {{k v g1 {k2 v2 g1 {k3 v3 k2 v22 g1 {k3 v3} k4 v4} k5 v55} k5 v5} {k . g1 {k2 . g1 {k3 . k2 . g1 {k3 .} k4 .} k5 .} k5 .}}
+} -result {{k v g1 {k2 v2 g1 {k3 v3 k2 v22 g1 {k3 v3} k4 v4} k5 v55} k5 v5} {k S g1 {k2 S g1 {k3 S k2 S g1 {k3 S} k4 S} k5 S} k5 S}}
 
 tcltest::test file-4.3 {
 	read conf from a file with nested include statements (with subsection) and -path
 } -body {
 	set conf [conf::load_from_file -hd . -path incl test_incl.5.conf]
 	return $conf
-} -result {{k v g1 {k2 v2 g1 {k3 v3 k2 v22 g1 {k3 v3} k4 v4} k5 v55} k5 v5} {k . g1 {k2 . g1 {k3 . k2 . g1 {k3 .} k4 .} k5 .} k5 .}}
+} -result {{k v g1 {k2 v2 g1 {k3 v3 k2 v22 g1 {k3 v3} k4 v4} k5 v55} k5 v5} {k S g1 {k2 S g1 {k3 S k2 S g1 {k3 S} k4 S} k5 S} k5 S}}
 
 tcltest::test file-4.4 {
 	read conf from a file with nested include statements (with subsection) and -path
 } -body {
 	set conf [conf::load_from_file -hd . -path incl test_incl.6.conf]
 	return $conf
-} -result {{k v gg {p1 V1 p2 V2 p3 V3 p4 V4 p5 V5 s1 {p6 V6} p7 V7} k5 v5} {k . gg {p1 . p2 . p3 . p4 . p5 . s1 {p6 .} p7 .} k5 .}}
+} -result {{k v gg {p1 V1 p2 V2 p3 V3 p4 V4 p5 V5 s1 {p6 V6} p7 V7} k5 v5} {k S gg {p1 S p2 S p3 S p4 S p5 S s1 {p6 S} p7 S} k5 S}}
 
 tcltest::cleanupTests

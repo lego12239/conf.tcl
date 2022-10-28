@@ -6,7 +6,7 @@ tcltest::test comments-1.0 {
 	read conf from a missing file
 } -body {
 	conf::load_from_file test.comments.conf
-} -result {{k v k1 v1 k2 v2 k3 v3} {k . k1 . k2 . k3 .}}
+} -result {{k v k1 v1 k2 v2 k3 v3} {k S k1 S k2 S k3 S}}
 
 
 tcltest::cleanupTests

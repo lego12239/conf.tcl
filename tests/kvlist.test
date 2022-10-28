@@ -7,14 +7,14 @@ tcltest::test kvlist-1.0 {
 } -body {
 	conf::load_from_str "k1=v1
 	k1 = \[1 2 \[3\]\]"
-} -result {{k1 {1 2 3}} {k1 .}}
+} -result {{k1 {1 2 3}} {k1 L}}
 
 tcltest::test kvlist-1.1 {
 	simple key list-value pair
 } -body {
 	conf::load_from_str "k1=v1
 	k1 = \[1 2 \[3 4\]\]"
-} -result {{k1 {1 2 {3 4}}} {k1 .}}
+} -result {{k1 {1 2 {3 4}}} {k1 L}}
 
 tcltest::test kvlist-1.2 {
 	simple key list-value pair
@@ -24,7 +24,7 @@ tcltest::test kvlist-1.2 {
 	2
 	\[3
 	4\]\]"
-} -result {{k1 {1 2 {3 4}}} {k1 .}}
+} -result {{k1 {1 2 {3 4}}} {k1 L}}
 
 tcltest::test kvlist-2.0 {
 	key list-value pair and +=
@@ -32,7 +32,7 @@ tcltest::test kvlist-2.0 {
 	conf::load_from_str "k1=v1
 	k1 += v7
 	k1 += v8"
-} -result {{k1 {v1 v7 v8}} {k1 .}}
+} -result {{k1 {v1 v7 v8}} {k1 L}}
 
 tcltest::test kvlist-2.0.1 {
 	key list-value pair and += without spaces
@@ -40,7 +40,7 @@ tcltest::test kvlist-2.0.1 {
 	conf::load_from_str "k1=v1
 	k1+=v7
 	k1+=v8"
-} -result {{k1 {v1 v7 v8}} {k1 .}}
+} -result {{k1 {v1 v7 v8}} {k1 L}}
 
 tcltest::test kvlist-2.1 {
 	key list-value pair and +=
@@ -48,7 +48,7 @@ tcltest::test kvlist-2.1 {
 	conf::load_from_str "k1=v1
 	k1 += \[v7 v71 v72\]
 	k1 += v8"
-} -result {{k1 {v1 v7 v71 v72 v8}} {k1 .}}
+} -result {{k1 {v1 v7 v71 v72 v8}} {k1 L}}
 
 tcltest::test kvlist-2.2 {
 	key list-value pair and +=
@@ -56,7 +56,7 @@ tcltest::test kvlist-2.2 {
 	conf::load_from_str "k1=\[v1 v12 v13\]
 	k1 += v7
 	k1 += v8"
-} -result {{k1 {v1 v12 v13 v7 v8}} {k1 .}}
+} -result {{k1 {v1 v12 v13 v7 v8}} {k1 L}}
 
 tcltest::test kvlist-2.3 {
 	key list-value pair and +=
@@ -65,7 +65,7 @@ tcltest::test kvlist-2.3 {
 	k1 += v7
 	k1 += \[v8 v81 v82\]
 	k1 += v9"
-} -result {{k1 {v1 v12 v13 v7 v8 v81 v82 v9}} {k1 .}}
+} -result {{k1 {v1 v12 v13 v7 v8 v81 v82 v9}} {k1 L}}
 
 tcltest::test kvlist-2.4 {
 	key list-value pair and +=
@@ -74,7 +74,7 @@ tcltest::test kvlist-2.4 {
 	k1 += v7
 	k1 += \[v8 v81 v82\]
 	k1 += v9"
-} -result {{k1 {v1 v12 v13 v7 v8 v81 v82 v9}} {k1 .}}
+} -result {{k1 {v1 v12 v13 v7 v8 v81 v82 v9}} {k1 L}}
 
 tcltest::test kvlist-2.5 {
 	key list-value pair and +=
@@ -82,36 +82,36 @@ tcltest::test kvlist-2.5 {
 	conf::load_from_str "k1+=v1
 	k1 += v7
 	k1 += v8"
-} -result {{k1 {v1 v7 v8}} {k1 .}}
+} -result {{k1 {v1 v7 v8}} {k1 L}}
 
 tcltest::test kvlist-3.0 {
 	key value pair and ?=
 } -body {
 	conf::load_from_str -hd . "k1=\[k2 v2 k4 v4\] k1.k4?=\[v44 v45\]"
-} -result {{k1 {k2 v2 k4 v4}} {k1 .}}
+} -result {{k1 {k2 v2 k4 v4}} {k1 L}}
 
 tcltest::test kvlist-3.0.1 {
 	key value pair and ?=
 } -body {
 	conf::load_from_str -hd . "k1=\"k2 v2 k4 v4\" k1.k4?=\[v44 v45\]"
-} -result {{k1 {{k2 v2 k4 v4}}} {k1 .}}
+} -result {{k1 {{k2 v2 k4 v4}}} {k1 S}}
 
 tcltest::test kvlist-3.1 {
 	key value pair and ?=
 } -body {
 	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k4?=\[v44 v45\]"
-} -result {{k1 {k2 v2 k3 v3 k4 {v44 v45}}} {k1 {k2 . k3 . k4 .}}}
+} -result {{k1 {k2 v2 k3 v3 k4 {v44 v45}}} {k1 {k2 S k3 S k4 L}}}
 
 tcltest::test kvlist-3.2 {
 	key value pair and ?=
 } -body {
 	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k2?=\[v44 v45\]"
-} -result {{k1 {k2 v2 k3 v3}} {k1 {k2 . k3 .}}}
+} -result {{k1 {k2 v2 k3 v3}} {k1 {k2 S k3 S}}}
 
 tcltest::test kvlist-3.3 {
 	key value pair and ?=
 } -body {
 	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1 ?= \[v44 v45\]"
-} -result {{k1 {k2 v2 k3 v3}} {k1 {k2 . k3 .}}}
+} -result {{k1 {k2 v2 k3 v3}} {k1 {k2 S k3 S}}}
 
 tcltest::cleanupTests

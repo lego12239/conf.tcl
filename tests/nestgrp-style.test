@@ -6,7 +6,7 @@ tcltest::test nestgrp-1.0 {
 	parameter without a group
 } -body {
 	conf::load_from_str "k=v"
-} -result {{k v} {k .}}
+} -result {{k v} {k S}}
 
 tcltest::test nestgrp-2.0 {
 	parameter without a group and with a group
@@ -14,7 +14,7 @@ tcltest::test nestgrp-2.0 {
 	conf::load_from_str "k=v
 	grp.one\{
 	k=v\}"
-} -result {{k v grp.one {k v}} {k . grp.one {k .}}}
+} -result {{k v grp.one {k v}} {k S grp.one {k S}}}
 
 tcltest::test nestgrp-2.1 {
 	parameter without a group and with a group(with hd)
@@ -22,7 +22,7 @@ tcltest::test nestgrp-2.1 {
 	conf::load_from_str -hd . "k=v
 	grp.one\{
 	k=v\}"
-} -result {{k v grp {one {k v}}} {k . grp {one {k .}}}}
+} -result {{k v grp {one {k v}}} {k S grp {one {k S}}}}
 
 tcltest::test nestgrp-3.0 {
 	parameter within a nested group
@@ -32,7 +32,7 @@ tcltest::test nestgrp-3.0 {
 	k=v
 	another.grp \{
 	k=v\}\}"
-} -result {{k v grp.one {k v another.grp {k v}}} {k . grp.one {k . another.grp {k .}}}}
+} -result {{k v grp.one {k v another.grp {k v}}} {k S grp.one {k S another.grp {k S}}}}
 
 tcltest::test nestgrp-3.1 {
 	parameter within a nested group(with hd)
@@ -42,7 +42,7 @@ tcltest::test nestgrp-3.1 {
 	k=v
 	another.grp \{
 	k=v\}\}"
-} -result {{k v grp {one {k v another {grp {k v}}}}} {k . grp {one {k . another {grp {k .}}}}}}
+} -result {{k v grp {one {k v another {grp {k v}}}}} {k S grp {one {k S another {grp {k S}}}}}}
 
 tcltest::test nestgrp-4.0 {
 	parameter within a nested group(with hd)
@@ -56,6 +56,6 @@ tcltest::test nestgrp-4.0 {
 	another.grp \{
 	k=v
 	d.e.f=g\}\}"
-} -result {{k v grp {one {k w k1 v1 a {b c} another {grp {k v d {e {f g}}}}}}} {k . grp {one {k . k1 . a {b .} another {grp {k . d {e {f .}}}}}}}}
+} -result {{k v grp {one {k w k1 v1 a {b c} another {grp {k v d {e {f g}}}}}}} {k S grp {one {k S k1 S a {b S} another {grp {k S d {e {f S}}}}}}}}
 
 tcltest::cleanupTests

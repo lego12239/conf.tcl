@@ -6,7 +6,7 @@ tcltest::test ini-1.0 {
 	parameter without a group
 } -body {
 	conf::load_from_str "k=v"
-} -result {{k v} {k .}}
+} -result {{k v} {k S}}
 
 tcltest::test ini-2.0 {
 	parameter without a group and with a group
@@ -14,7 +14,7 @@ tcltest::test ini-2.0 {
 	conf::load_from_str "k=v
 	\[grp.one\]
 	k=v"
-} -result {{k v grp.one {k v}} {k . grp.one {k .}}}
+} -result {{k v grp.one {k v}} {k S grp.one {k S}}}
 
 tcltest::test ini-2.1 {
 	parameter without a group and with a group
@@ -22,7 +22,7 @@ tcltest::test ini-2.1 {
 	conf::load_from_str "k=v
 	\[grp.one\]
 	k1=v1"
-} -result {{k v grp.one {k1 v1}} {k . grp.one {k1 .}}}
+} -result {{k v grp.one {k1 v1}} {k S grp.one {k1 S}}}
 
 tcltest::test ini-2.2 {
 	parameter without a group and with a group
@@ -34,7 +34,7 @@ tcltest::test ini-2.2 {
 	k3=v3
 	\[grp-two\]
 	k4=v4"
-} -result {{k v k1 v1 grp.one {k2 v2 k3 v3} grp-two {k4 v4}} {k . k1 . grp.one {k2 . k3 .} grp-two {k4 .}}}
+} -result {{k v k1 v1 grp.one {k2 v2 k3 v3} grp-two {k4 v4}} {k S k1 S grp.one {k2 S k3 S} grp-two {k4 S}}}
 
 tcltest::test ini-3.0 {
 	parameter without a group and with a group(with hd)
@@ -46,7 +46,7 @@ tcltest::test ini-3.0 {
 	k3=v3
 	\[grp-two\]
 	k4=v4"
-} -result {{k v k1 v1 grp.one {k2 v2 k3 v3} grp-two {k4 v4}} {k . k1 . grp.one {k2 . k3 .} grp-two {k4 .}}}
+} -result {{k v k1 v1 grp.one {k2 v2 k3 v3} grp-two {k4 v4}} {k S k1 S grp.one {k2 S k3 S} grp-two {k4 S}}}
 
 tcltest::test ini-3.1 {
 	parameter without a group and with a group(with hd)
@@ -58,7 +58,7 @@ tcltest::test ini-3.1 {
 	k3=v3
 	\[grp-two\]
 	k4=v4"
-} -result {{k v k1 v1 grp {one {k2 v2 k3 v3}} grp-two {k4 v4}} {k . k1 . grp {one {k2 . k3 .}} grp-two {k4 .}}}
+} -result {{k v k1 v1 grp {one {k2 v2 k3 v3}} grp-two {k4 v4}} {k S k1 S grp {one {k2 S k3 S}} grp-two {k4 S}}}
 
 tcltest::test ini-3.2 {
 	parameter without a group and with a group(with hd)
@@ -70,7 +70,7 @@ tcltest::test ini-3.2 {
 	k3.g=v3
 	\[grp-two\]
 	k4.q=v4"
-} -result {{k v grp {one {k1 vv k2 v2 k3 {g v3}}} grp-two {k4 {q v4}}} {k . grp {one {k1 . k2 . k3 {g .}}} grp-two {k4 {q .}}}}
+} -result {{k v grp {one {k1 vv k2 v2 k3 {g v3}}} grp-two {k4 {q v4}}} {k S grp {one {k1 S k2 S k3 {g S}}} grp-two {k4 {q S}}}}
 
 tcltest::test ini-4.0 {
 	parameter without a group and with a group(with hd)
@@ -86,6 +86,6 @@ tcltest::test ini-4.0 {
 	k5=v5
 	\[a.b.c.d\]
 	k6=v6"
-} -result {{k v a {b {k1 v1 c {d {k2 v2 e {k3 v3} k6 v6} k4 v4}} k5 v5}} {k . a {b {k1 . c {d {k2 . e {k3 .} k6 .} k4 .}} k5 .}}}
+} -result {{k v a {b {k1 v1 c {d {k2 v2 e {k3 v3} k6 v6} k4 v4}} k5 v5}} {k S a {b {k1 S c {d {k2 S e {k3 S} k6 S} k4 S}} k5 S}}}
 
 tcltest::cleanupTests
