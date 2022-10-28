@@ -32,6 +32,7 @@ namespace eval conf {
 #       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
 #       proc as value set/append callback; and specified PRIV will be
 #       used as initial value for priv in a context.
+#       Callback must ret value type(S or L) or "" if value shouldn't be saved.
 # RETURN:
 #   {CONF_DICT CSPEC}   - dict with conf parameters, conf dict specification
 #   {CONF_DICT CSPEC PRIV} - dict with conf parameters, conf dict
@@ -83,6 +84,7 @@ proc load_from_file {args} {
 #       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
 #       proc as value set/append callback; and specified PRIV will be
 #       used as initial value for priv in a context.
+#       Callback must ret value type(S or L) or "" if value shouldn't be saved.
 # RETURN:
 #   {CONF_DICT CSPEC}   - dict with conf parameters, conf dict specification
 #   {CONF_DICT CSPEC PRIV} - dict with conf parameters, conf dict
@@ -125,6 +127,7 @@ proc load_from_fh {args} {
 #       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
 #       proc as value set/append callback; and specified PRIV will be
 #       used as initial value for priv in a context.
+#       Callback must ret value type(S or L) or "" if value shouldn't be saved.
 #   -s START_IDX
 #       start index for the parsing
 #   -e END_IDX
@@ -472,14 +475,14 @@ proc _conf_kv_set {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_set_list ctx conf $name [list $value] "=S"
+	_conf_kv_set_list ctx conf $name $value "=S"
 }
 
 # Assign a specified values list to a specified name
 # prms:
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
-#  vlist  - a conf parameter values list
+#  vlist  - a conf parameter value
 proc _conf_kv_set_list {_ctx _conf name vlist {op "=L"}} {
 	upvar $_ctx ctx
 	upvar $_conf conf
@@ -489,8 +492,8 @@ proc _conf_kv_set_list {_ctx _conf name vlist {op "=L"}} {
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
 	if {[dict get $ctx cb] ne ""} {
-		set ret [[dict get $ctx cb] ctx conf $op names vlist]
-		if {$ret != 0} {
+		set type [[dict get $ctx cb] ctx conf $op names vlist]
+		if {$type eq ""} {
 			return
 		}
 	}
@@ -515,14 +518,14 @@ proc _conf_kv_set_if_not_exist {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_set_list_if_not_exist ctx conf $name [list $value] "?=S"
+	_conf_kv_set_list_if_not_exist ctx conf $name $value "?=S"
 }
 
 # Assign a specified values list to a specified name if it's not exist.
 # prms:
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
-#  vlist  - a conf parameter values list
+#  vlist  - a conf parameter value
 proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist {op "?=L"}} {
 	upvar $_ctx ctx
 	upvar $_conf conf
@@ -531,8 +534,8 @@ proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist {op "?=L"}} {
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
 	if {[dict get $ctx cb] ne ""} {
-		set ret [[dict get $ctx cb] ctx conf $op names vlist]
-		if {$ret != 0} {
+		set type [[dict get $ctx cb] ctx conf $op names vlist]
+		if {$type eq ""} {
 			return
 		}
 	}
@@ -553,27 +556,30 @@ proc _conf_kv_append {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_append_list ctx conf $name [list $value] "+=S"
+	_conf_kv_append_list ctx conf $name $value "+=S"
 }
 
 # Append a specified values list to a specified name
 # prms:
 #  _ctx - ctx var name
 #  name - a conf parameter name(string)
-#  vlist  - a conf parameter values list
+#  vlist  - a conf parameter value
 proc _conf_kv_append_list {_ctx _conf name vlist {op "+=L"}} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 	set data ""
 
-	set type "L"
+	set type [string index $op 2]
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
 	if {[dict get $ctx cb] ne ""} {
-		set ret [[dict get $ctx cb] ctx conf $op names vlist]
-		if {$ret != 0} {
+		set type [[dict get $ctx cb] ctx conf $op names vlist]
+		if {$type eq ""} {
 			return
 		}
+	}
+	if {$type eq "S"} {
+		set vlist [list $vlist]
 	}
 	# Protect from reassign mistakes. See _conf_kv_set proc for the
 	# explanation.
@@ -587,10 +593,14 @@ proc _conf_kv_append_list {_ctx _conf name vlist {op "+=L"}} {
 		dict set conf {*}$names ""
 		spec_path_unset {ctx cspec} $names
 	} elseif {$ret == 0} {
-		set vlist [list {*}[dict get $conf {*}$names] {*}$vlist]
+		if {$data eq "S"} {
+			set vlist [list [dict get $conf {*}$names] {*}$vlist]
+		} else {
+			set vlist [list {*}[dict get $conf {*}$names] {*}$vlist]
+		}
 	}
 	dict set conf {*}$names $vlist
-	spec_key_set {ctx cspec} $names $type
+	spec_key_set {ctx cspec} $names "L"
 }
 
 # Get list of names from supplied str by splitting it on hd char sequence.
