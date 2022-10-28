@@ -145,36 +145,36 @@ tcltest::test kv-4.2 {
 	simple key value pair with quotes
 } -body {
 	conf::load_from_str "k1= \"v1 \"  "
-} -result {{k1 {{v1 }}} {k1 S}}
+} -result {{k1 {v1 }} {k1 S}}
 
 tcltest::test kv-4.3 {
 	simple key value pair with quotes
 } -body {
 	conf::load_from_str "k1= \" v1 \"  "
-} -result {{k1 {{ v1 }}} {k1 S}}
+} -result {{k1 { v1 }} {k1 S}}
 
 tcltest::test kv-4.4 {
 	simple key value pair with quotes
 } -body {
 	conf::load_from_str "k1= \"  v1   \"  "
-} -result {{k1 {{  v1   }}} {k1 S}}
+} -result {{k1 {  v1   }} {k1 S}}
 
 tcltest::test kv-4.5 {
 	simple key value pair with quotes
 } -body {
 	conf::load_from_str "\" k1\"= \"  v1   \"  "
-} -result {{{ k1} {{  v1   }}} {{ k1} S}}
+} -result {{{ k1} {  v1   }} {{ k1} S}}
 
 tcltest::test kv-4.6 {
 	simple key value pair with quotes
 } -body {
 	conf::load_from_str "\" k1  \"= \"  v1   \"  "
-} -result {{{ k1  } {{  v1   }}} {{ k1  } S}}
+} -result {{{ k1  } {  v1   }} {{ k1  } S}}
 
 tcltest::test kv-4.7 {
 	simple key value pair with quotes
 } -body {
 	conf::load_from_str "\" k1  \" = \"  v1   \"  "
-} -result {{{ k1  } {{  v1   }}} {{ k1  } S}}
+} -result {{{ k1  } {  v1   }} {{ k1  } S}}
 
 tcltest::cleanupTests

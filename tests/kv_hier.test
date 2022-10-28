@@ -107,7 +107,7 @@ tcltest::test kv_hier-5.0.1 {
 	key value pair and ?=
 } -body {
 	conf::load_from_str -hd . "k1=\"k2 v2 k4 v4\" k1.k4?=v44"
-} -result {{k1 {{k2 v2 k4 v4}}} {k1 S}}
+} -result {{k1 {k2 v2 k4 v4}} {k1 S}}
 
 tcltest::test kv_hier-5.1 {
 	key value pair and ?=
