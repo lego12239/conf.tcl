@@ -908,6 +908,34 @@ proc gets_from_str {_ctx _var} {
 	dict set ctx prms -s [expr {$pos + 1}]
 	return [string length $var]
 }
+
+######################################################################
+# conf dict access routines
+######################################################################
+# Get a specified key with specified type(optional) from a parsed conf.
+# prms:
+#  cas   - a list with conf and spec(this list is returned from load_* proc)
+#  names - a list with key full name
+#  type  - S or L
+# ret:
+#  VALUE - a key value
+#
+# If a key isn't found(or it is a section, instead of a leaf), then exception is
+# thrown. If type is specified and it isn't equal to key type, then exception is
+# thrown.
+proc get_key {cas names {type ""}} {
+	set ret [conf::spec_key_existence [lindex $cas 1] $names val]
+	if {[$ret != 0]} {
+		throw [list CONF NOKEY $names $ret] "conf error: $ret: no key {$names}"
+	}
+	set value [dict get [lindex $cas 0] $names]
+	if {($type ne "") && ($type ne $val)} {
+		throw [list CONF WRONGTYPE $names $val] "conf error: key {$names} has type\
+		  $val instead of $type"
+	}
+
+	return $value
+}
 }
 
 package provide conf 0.10
