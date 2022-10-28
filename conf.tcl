@@ -593,117 +593,6 @@ proc _conf_kv_append_list {_ctx _conf name vlist {op "+=L"}} {
 	spec_key_set {ctx cspec} $names $type
 }
 
-# Set a specified key to a specified value
-# prms:
-#  _cspec - a var name of config specification.
-#           This can be a list of names, where first name is a dict name
-#           and next names are full name of config specification key saved
-#           in this dict.
-#  names  - a key full name(separated with spaces)
-#  value  - a new value for a key
-proc spec_key_set {_cspec names value} {
-	if {($value ne "S") && ($value ne "L")} {
-		error "wrong cspec key value: $value"
-	}
-
-	upvar [lindex $_cspec 0] cspec0
-	if {[llength $_cspec] > 1} {
-		set cspec [list cspec0 [lrange $_cspec 1 end]]
-	} else {
-		set cspec [list cspec0]
-	}
-
-	dict set {*}$cspec {*}$names $value
-}
-
-# Unset a specifid key
-# prms:
-#  _cspec - a var name of config specification.
-#           This can be a list of names, where first name is a dict name
-#           and next names are full name of config specification key saved
-#           in this dict.
-#  names  - a key full name(separated with spaces)
-proc spec_path_unset {_cspec names} {
-	upvar [lindex $_cspec 0] cspec0
-	if {[llength $_cspec] > 1} {
-		set cspec [list cspec0 [lrange $_cspec 1 end]]
-	} else {
-		set cspec [list cspec0]
-	}
-	dict unset {*}$cspec {*}$names
-}
-
-# Return key existence state.
-# prms:
-#  spec   - specification of some dict, where key is a key and
-#           a leaf value is a dot
-#  names  - a key full path(keys separated by spaces)
-#  _out   - a variable name to save some data in addition to ret value;
-#           this data is different for each ret value(see description of ret
-#           value below)
-# ret:
-#  -2 - specified key doesn't exists and some predecessor key is a leaf key;
-#       $_out var contains existent part of key path(a part of names list)
-#  -1 - specified key doesn't exists
-#   0 - specified key exists and it is a leaf key
-#       $_out var contains
-#   1 - specified key exists, but it is not a leaf key
-#
-# E.g. we have a dict:
-#  k1 {k2 {k3 "some data"}}
-# A dict spec for this dict is:
-#  set d [dict create k1 {k2 {k3 S}}]
-# So:
-# % spec_key_existence $d {k1 k2 k3 k4} val
-# -2
-# % puts $val
-# k1 k2 k3
-# % spec_key_existence $d {k1 k4}
-# -1
-# % spec_key_existence $d {k1 k2 k3} val
-# 0
-# % puts $val
-# S
-# % spec_key_existence $d {k1 k2}
-# 1
-proc spec_key_existence {_cspec names {_val ""}} {
-	upvar [lindex $_cspec 0] cspec0
-	if {[llength $_cspec] > 1} {
-		set v [dict get $cspec0 {*}[lrange $_cspec 1 end]]
-	} else {
-		set v $cspec0
-	}
-
-	set len [llength $names]
-	incr len -1
-	for {set i 0} {$i <= $len} {incr i} {
-		set k [lindex $names $i]
-		if {![dict exists $v $k]} {
-			return -1
-		}
-		set v [dict get $v $k]
-		if {$i < $len} {
-			if {($v eq "S") || ($v eq "L")} {
-				if {$_val ne ""} {
-					upvar $_val val
-					set val [lrange $names 0 $i]
-				}
-				return -2
-			}
-		} else {
-			if {($v ne "S") && ($v ne "L")} {
-				return 1
-			}
-		}
-	}
-
-	if {$_val ne ""} {
-		upvar $_val val
-		set val $v
-	}
-	return 0
-}
-
 # Get list of names from supplied str by splitting it on hd char sequence.
 # If hd is empty string, then use supplied str as is.
 # E.g.(ctx with hd set to "->"):
@@ -936,6 +825,121 @@ proc get_key {cas names {type ""}} {
 
 	return $value
 }
+
+######################################################################
+# spec manipulation routines
+######################################################################
+# Set a specified key to a specified value
+# prms:
+#  _cspec - a var name of config specification.
+#           This can be a list of names, where first name is a dict name
+#           and next names are full name of config specification key saved
+#           in this dict.
+#  names  - a key full name(separated with spaces)
+#  value  - a new value for a key
+proc spec_key_set {_cspec names value} {
+	if {($value ne "S") && ($value ne "L")} {
+		error "wrong cspec key value: $value"
+	}
+
+	upvar [lindex $_cspec 0] cspec0
+	if {[llength $_cspec] > 1} {
+		set cspec [list cspec0 [lrange $_cspec 1 end]]
+	} else {
+		set cspec [list cspec0]
+	}
+
+	dict set {*}$cspec {*}$names $value
+}
+
+# Unset a specifid key
+# prms:
+#  _cspec - a var name of config specification.
+#           This can be a list of names, where first name is a dict name
+#           and next names are full name of config specification key saved
+#           in this dict.
+#  names  - a key full name(separated with spaces)
+proc spec_path_unset {_cspec names} {
+	upvar [lindex $_cspec 0] cspec0
+	if {[llength $_cspec] > 1} {
+		set cspec [list cspec0 [lrange $_cspec 1 end]]
+	} else {
+		set cspec [list cspec0]
+	}
+	dict unset {*}$cspec {*}$names
+}
+
+# Return key existence state.
+# prms:
+#  spec   - specification of some dict, where key is a key and
+#           a leaf value is a dot
+#  names  - a key full path(keys separated by spaces)
+#  _out   - a variable name to save some data in addition to ret value;
+#           this data is different for each ret value(see description of ret
+#           value below)
+# ret:
+#  -2 - specified key doesn't exists and some predecessor key is a leaf key;
+#       $_out var contains existent part of key path(a part of names list)
+#  -1 - specified key doesn't exists
+#   0 - specified key exists and it is a leaf key
+#       $_out var contains
+#   1 - specified key exists, but it is not a leaf key
+#
+# E.g. we have a dict:
+#  k1 {k2 {k3 "some data"}}
+# A dict spec for this dict is:
+#  set d [dict create k1 {k2 {k3 S}}]
+# So:
+# % spec_key_existence $d {k1 k2 k3 k4} val
+# -2
+# % puts $val
+# k1 k2 k3
+# % spec_key_existence $d {k1 k4}
+# -1
+# % spec_key_existence $d {k1 k2 k3} val
+# 0
+# % puts $val
+# S
+# % spec_key_existence $d {k1 k2}
+# 1
+proc spec_key_existence {_cspec names {_val ""}} {
+	upvar [lindex $_cspec 0] cspec0
+	if {[llength $_cspec] > 1} {
+		set v [dict get $cspec0 {*}[lrange $_cspec 1 end]]
+	} else {
+		set v $cspec0
+	}
+
+	set len [llength $names]
+	incr len -1
+	for {set i 0} {$i <= $len} {incr i} {
+		set k [lindex $names $i]
+		if {![dict exists $v $k]} {
+			return -1
+		}
+		set v [dict get $v $k]
+		if {$i < $len} {
+			if {($v eq "S") || ($v eq "L")} {
+				if {$_val ne ""} {
+					upvar $_val val
+					set val [lrange $names 0 $i]
+				}
+				return -2
+			}
+		} else {
+			if {($v ne "S") && ($v ne "L")} {
+				return 1
+			}
+		}
+	}
+
+	if {$_val ne ""} {
+		upvar $_val val
+		set val $v
+	}
+	return 0
+}
+
 }
 
 package provide conf 0.10
