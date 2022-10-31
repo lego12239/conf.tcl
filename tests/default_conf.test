@@ -5,7 +5,25 @@ package require conf
 tcltest::test default_conf-1.0 {
 	-default_conf
 } -body {
-	conf::load_from_str -default {k1 vdef kdef vdef} "k1 = v1 k2 = v2"
+	conf::load_from_str -default {{k1 vdef kdef vdef}} "k1 = v1 k2 = v2"
 } -result {{k1 v1 kdef vdef k2 v2} {k1 S k2 S}}
+
+tcltest::test default_conf-2.0 {
+	-default_conf, spec
+} -body {
+	conf::load_from_str -default {{k1 vdef kdef vdef} {k1 S kdef S}} "k1 = v1 k2 = v2"
+} -result {{k1 v1 kdef vdef k2 v2} {k1 S kdef S k2 S}}
+
+tcltest::test default_conf-2.1 {
+	-default_conf, spec
+} -body {
+	conf::load_from_str -default {{k1 vdef kdef vdef} {kdef S}} "k1 ?= v1 k2 = v2"
+} -result {{k1 v1 kdef vdef k2 v2} {kdef S k1 S k2 S}}
+
+tcltest::test default_conf-2.2 {
+	-default_conf, spec
+} -body {
+	conf::load_from_str -default {{k1 vdef kdef vdef} {k1 S kdef S}} "k1 ?= v1 k2 = v2"
+} -result {{k1 vdef kdef vdef k2 v2} {k1 S kdef S k2 S}}
 
 tcltest::cleanupTests

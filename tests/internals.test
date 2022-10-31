@@ -7,14 +7,14 @@ tcltest::test internals-1.0 {
 } -body {
 	set ctx [conf::_ctx_mk]
 	return $ctx
-} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} cspec {} src {} srcs {} sect {} sect_type {}}
+} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} default {} cspec {} src {} srcs {} sect {} sect_type {}}
 
 tcltest::test internals-1.1 {
 	ctx mk(with prms)
 } -body {
-	set ctx [conf::_ctx_mk {-hd . -default "k = v"}]
+	set ctx [conf::_ctx_mk {-hd . -default {{k v} {}}}]
 	return $ctx
-} -result {prms {-hd . -default {k = v} -path ./ -cb {}} cb {} priv {} cspec {} src {} srcs {} sect {} sect_type {}}
+} -result {prms {-hd . -default {{k v} {}} -path ./ -cb {}} cb {} priv {} default {k v} cspec {} src {} srcs {} sect {} sect_type {}}
 
 tcltest::test internals-2.0 {
 	ctx push
@@ -22,7 +22,7 @@ tcltest::test internals-2.0 {
 	set ctx [conf::_ctx_mk]
 	conf::_ctx_src_push ctx {src "k1 = v1" gets_r conf::gets_from_str}
 	return $ctx
-} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} cspec {} src {gets_r conf::gets_from_str lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src {k1 = v1}} srcs {{}} sect {} sect_type {}}
+} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} default {} cspec {} src {gets_r conf::gets_from_str lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src {k1 = v1}} srcs {{}} sect {} sect_type {}}
 
 tcltest::test internals-2.1 {
 	ctx push twice
@@ -31,7 +31,7 @@ tcltest::test internals-2.1 {
 	conf::_ctx_src_push ctx {src "k1 = v1" gets_r conf::gets_from_str}
 	conf::_ctx_src_push ctx {src "CHAN" gets_r conf::gets_from_file}
 	return $ctx
-} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} cspec {} src {gets_r conf::gets_from_file lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src CHAN} srcs {{} {gets_r conf::gets_from_str lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src {k1 = v1}}} sect {} sect_type {}}
+} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} default {} cspec {} src {gets_r conf::gets_from_file lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src CHAN} srcs {{} {gets_r conf::gets_from_str lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src {k1 = v1}}} sect {} sect_type {}}
 
 tcltest::test internals-3.0 {
 	ctx pop
@@ -40,7 +40,7 @@ tcltest::test internals-3.0 {
 	conf::_ctx_src_push ctx {src "k1 = v1" gets_r conf::gets_from_str}
 	conf::_ctx_src_pop ctx
 	return $ctx
-} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} cspec {} src {} srcs {} sect {} sect_type {}}
+} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} default {} cspec {} src {} srcs {} sect {} sect_type {}}
 
 tcltest::test internals-3.1 {
 	ctx pop
@@ -50,7 +50,7 @@ tcltest::test internals-3.1 {
 	conf::_ctx_src_push ctx {src "CHAN" gets_r conf::gets_from_file}
 	conf::_ctx_src_pop ctx
 	return $ctx
-} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} cspec {} src {gets_r conf::gets_from_str lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src {k1 = v1}} srcs {{}} sect {} sect_type {}}
+} -result {prms {-hd {} -default {} -path ./ -cb {}} cb {} priv {} default {} cspec {} src {gets_r conf::gets_from_str lineno 0 lineno_tok 0 buf {} toks {} toks_toks {} src {k1 = v1}} srcs {{}} sect {} sect_type {}}
 
 tcltest::test internals-4.0 {
 	spec_key_existence ret is -2
