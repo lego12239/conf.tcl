@@ -282,25 +282,9 @@ proc __parse {_ctx conf} {
 			_toks_drop ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "8 6 "]} {
-			set fnames [lsort [glob -directory [dict get $ctx prms -path]\
-			  [_toks_str ctx 1]]]
+			set fmask [_toks_str ctx 1]
 			_toks_drop ctx 2
-			foreach fname $fnames {
-				set fh [open $fname]
-				set src [dict create\
-				  src $fh\
-				  gets_r [namespace current]::gets_from_fh]
-				_ctx_src_push ctx $src
-				set err ""
-				if {[catch {_parse ctx $conf} conf]} {
-					set err $conf
-				}
-				_ctx_src_pop ctx
-				close $fh
-				if {$err ne ""} {
-					error $err $::errorInfo $::errorCode
-				}
-			}
+			_parse_file_inclusion ctx conf $fmask
 #			puts "sect: [dict get $ctx sect]"
 		} else {
 			error "parse error at [dict get $ctx src lineno_tok] line:\
@@ -339,6 +323,29 @@ proc _parse_list {_ctx} {
 	}
 
 	return $list
+}
+
+proc _parse_file_inclusion {_ctx _conf fmask} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	set fnames [lsort [glob -directory [dict get $ctx prms -path] $fmask]]
+	foreach fname $fnames {
+		set fh [open $fname]
+		set src [dict create\
+		  src $fh\
+		  gets_r [namespace current]::gets_from_fh]
+		_ctx_src_push ctx $src
+		set err ""
+		if {[catch {_parse ctx $conf} conf]} {
+			set err $conf
+		}
+		_ctx_src_pop ctx
+		close $fh
+		if {$err ne ""} {
+			error $err $::errorInfo $::errorCode
+		}
+	}
 }
 
 # Create an initial context.
