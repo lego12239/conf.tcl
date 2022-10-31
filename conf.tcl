@@ -35,8 +35,8 @@ namespace eval conf {
 #       used as initial value for priv in a context.
 #       Callback must ret value type(S or L) or "" if value shouldn't be saved.
 # RETURN:
-#   {CONF_DICT CSPEC}   - dict with conf parameters, conf dict specification
-#   {CONF_DICT CSPEC PRIV} - dict with conf parameters, conf dict
+#   {CONF CSPEC}   - dict with conf parameters, conf dict specification
+#   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
 #                            specification and priv
 proc load_from_file {args} {
 	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1}] opts idx
@@ -88,8 +88,8 @@ proc load_from_file {args} {
 #       used as initial value for priv in a context.
 #       Callback must ret value type(S or L) or "" if value shouldn't be saved.
 # RETURN:
-#   {CONF_DICT CSPEC}   - dict with conf parameters, conf dict specification
-#   {CONF_DICT CSPEC PRIV} - dict with conf parameters, conf dict
+#   {CONF CSPEC}   - dict with conf parameters, conf dict specification
+#   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
 #                            specification and priv
 proc load_from_fh {args} {
 	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1}] opts idx
@@ -136,8 +136,8 @@ proc load_from_fh {args} {
 #   -e END_IDX
 #       end index for the parsing(including char at this idx)
 # RETURN:
-#   {CONF_DICT CSPEC}   - dict with conf parameters, conf dict specification
-#   {CONF_DICT CSPEC PRIV} - dict with conf parameters, conf dict
+#   {CONF CSPEC}   - dict with conf parameters, conf dict specification
+#   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
 #                            specification and priv
 proc load_from_str {args} {
 	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1 -s 1 -e 1}]\
