@@ -105,6 +105,62 @@ tcltest::test callback-1.4 {
 	return $ret
 } -result {{K17 VAL g1 {K18 VAL K19 VAL g2 {g3 {K20 VAL}} K21 VAL} K22 VAL} {K17 S g1 {K18 L K19 L g2 {g3 {K20 S}} K21 S} K22 S} 23}
 
+tcltest::test callback-1.5 {
+	callback, =S, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		lset names end k4
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1.k2=\[k2 v2 k4 v4\] k1.k1 = v44"
+} -result {{k1 {k4 v44}} {k1 {k4 S}} {}}
+
+tcltest::test callback-1.6 {
+	callback, =S, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "=S"} {
+			lset names end k4
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1.k2=\[k2 v2 k4 v4\] k1.k2 = v44"
+} -result {{k1 {k2 {k2 v2 k4 v4} k4 v44}} {k1 {k2 L k4 S}} {}}
+
+tcltest::test callback-1.7 {
+	callback, =L, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		lset names end k4
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1.k2 = v44 k1.k7=\[k2 v2 k4 v4\]"
+} -result {{k1 {k4 {k2 v2 k4 v4}}} {k1 {k4 L}} {}}
+
+tcltest::test callback-1.8 {
+	callback, =L, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "=L"} {
+			lset names end k4
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1.k2 = v44 k1.k2=\[k2 v2 k4 v4\]"
+} -result {{k1 {k2 v44 k4 {k2 v2 k4 v4}}} {k1 {k2 S k4 L}} {}}
+
 tcltest::test callback-2.0 {
 	callback, +=S
 } -body {
@@ -130,6 +186,36 @@ tcltest::test callback-2.0.1 {
 	}
 	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1.k4+=v44"
 } -result {{} {} {{k1 =L {k2 v2 k4 v4}} {{k1 k4} +=S v44}}}
+
+tcltest::test callback-2.0.2 {
+	callback, +=S, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "+=S"} {
+			lset names 0 k2
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1+=v44"
+} -result {{k1 {k2 v2 k4 v4} k2 v44} {k1 L k2 L} {}}
+
+tcltest::test callback-2.0.3 {
+	callback, +=S, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "+=S"} {
+			lset names 0 k1
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k2+=v44"
+} -result {{k1 {k2 v2 k4 v4 v44}} {k1 L} {}}
 
 tcltest::test callback-2.1 {
 	callback, +=S
@@ -200,6 +286,40 @@ tcltest::test callback-2.4.1 {
 	k1 += v8"
 } -result {{} {} {{k1 =S v1} {k1 +=L {v7 v71 v72}} {k1 +=S v8}}}
 
+tcltest::test callback-2.4.2 {
+	callback, +=L, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "+=L"} {
+			set names [list k2 k2]
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -cb confcb "k1=v1
+	k1 += \[v7 v71 v72\]
+	k1 += v8"
+} -result {{k1 {v1 v8} k2 {k2 {v7 v71 v72}}} {k1 L k2 {k2 L}} {}}
+
+tcltest::test callback-2.4.3 {
+	callback, +=L, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "+=L"} {
+			set names k1
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -cb confcb "k1=v1
+	k2.k2 += \[v7 v71 v72\]
+	k1 += v8"
+} -result {{k1 {v1 v7 v71 v72 v8}} {k1 L} {}}
+
 tcltest::test callback-3.0 {
 	callback, ?=S
 } -body {
@@ -225,6 +345,36 @@ tcltest::test callback-3.0.1 {
 	}
 	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1.k4?=v44"
 } -result {{} {} {{k1 =L {k2 v2 k4 v4}} {{k1 k4} ?=S v44}}}
+
+tcltest::test callback-3.0.2 {
+	callback, ?=S, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "?=S"} {
+			set names [list k2 k2]
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1.k4?=v44"
+} -result {{k1 {k2 v2 k4 v4} k2 {k2 v44}} {k1 L k2 {k2 S}} {}}
+
+tcltest::test callback-3.0.3 {
+	callback, ?=S, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "?=S"} {
+			set names k1
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k2?=v44"
+} -result {{k1 {k2 v2 k4 v4}} {k1 L} {}}
 
 tcltest::test callback-3.1 {
 	callback, ?=S
@@ -291,6 +441,36 @@ tcltest::test callback-3.5 {
 	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1.k4?=\[v44 v45\]"
 } -result {{k1 {k2 v2 k4 v4}} {k1 L} {{k1 =L {k2 v2 k4 v4}} {{k1 k4} ?=L {v44 v45}}}}
 
+tcltest::test callback-3.5.1 {
+	callback, ?=L, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$names eq {k1 k4}} {
+			set names [list k2 k2]
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1.k4?=\[v44 v45\]"
+} -result {{k1 {k2 v2 k4 v4} k2 {k2 {v44 v45}}} {k1 L k2 {k2 L}} {}}
+
+tcltest::test callback-3.5.2 {
+	callback, ?=L, change key name
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$names eq "k2"} {
+			set names k1
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k2?=\[v44 v45\]"
+} -result {{k1 {k2 v2 k4 v4}} {k1 L} {}}
+
 tcltest::test callback-3.6 {
 	callback, ?=L, ret 1
 } -body {
@@ -303,5 +483,90 @@ tcltest::test callback-3.6 {
 	}
 	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1.k4?=\[v44 v45\]"
 } -result {{} {} {{k1 =L {k2 v2 k4 v4}} {{k1 k4} ?=L {v44 v45}}}}
+
+tcltest::test callback-4.0 {
+	callback, =S, change to =L
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "=S"} {
+			set vlist [list $vlist 77]
+		}
+		return "L"
+	}
+	conf::load_from_str -hd . -cb confcb "k1.k2=\[k2 v2 k4 v4\] k1.k4=v44"
+} -result {{k1 {k2 {k2 v2 k4 v4} k4 {v44 77}}} {k1 {k2 L k4 L}} {}}
+
+tcltest::test callback-4.1 {
+	callback, =L, change to =S
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		lappend vlist 77
+		return "S"
+	}
+	conf::load_from_str -hd . -cb confcb "k1.k2=\[k2 v2 k4 v4\] k1.k4=v44"
+} -result {{k1 {k2 {k2 v2 k4 v4 77} k4 {v44 77}}} {k1 {k2 S k4 S}} {}}
+
+tcltest::test callback-4.2 {
+	callback, +=S, change to +=L
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		return "L"
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1+=\"v44 v45\""
+} -result {{k1 {k2 v2 k4 v4 v44 v45}} {k1 L} {}}
+
+tcltest::test callback-4.3 {
+	callback, +=L, change to +=S
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "+=L"} {
+			return S
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k1+=\[v44 v45\]"
+} -result {{k1 {k2 v2 k4 v4 {v44 v45}}} {k1 L} {}}
+
+tcltest::test callback-4.4 {
+	callback, ?=S, change to ?=L
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "?=S"} {
+			return L
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k2?=v44"
+} -result {{k1 {k2 v2 k4 v4} k2 v44} {k1 L k2 L} {}}
+
+tcltest::test callback-4.5 {
+	callback, ?=L, change to ?=S
+} -body {
+	proc confcb {_ctx _conf op _names _vlist} {
+		upvar $_ctx ctx
+		upvar $_names names
+		upvar $_vlist vlist
+		if {$op eq "?=L"} {
+			return S
+		}
+		return [string index $op end]
+	}
+	conf::load_from_str -hd . -cb confcb "k1=\[k2 v2 k4 v4\] k2?=\[v44 v45\]"
+} -result {{k1 {k2 v2 k4 v4} k2 {v44 v45}} {k1 L k2 S} {}}
 
 tcltest::cleanupTests
