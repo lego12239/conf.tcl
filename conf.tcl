@@ -488,7 +488,7 @@ proc _conf_kv_set_list {_ctx _conf name vlist {op "=L"}} {
 	upvar $_conf conf
 	set data ""
 
-	set type [string index $op 1]
+	set type [string index $op end]
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
 	if {[dict get $ctx cb] ne ""} {
@@ -530,7 +530,7 @@ proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist {op "?=L"}} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	set type [string index $op 2]
+	set type [string index $op end]
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
 	if {[dict get $ctx cb] ne ""} {
@@ -569,7 +569,7 @@ proc _conf_kv_append_list {_ctx _conf name vlist {op "+=L"}} {
 	upvar $_conf conf
 	set data ""
 
-	set type [string index $op 2]
+	set type [string index $op end]
 	set names [_sect_get ctx]
 	lappend names {*}[_mk_name ctx $name]
 	if {[dict get $ctx cb] ne ""} {
