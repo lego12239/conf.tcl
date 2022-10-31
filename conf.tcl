@@ -19,13 +19,14 @@ namespace eval conf {
 ######################################################################
 # Load a conf from a file.
 # SYNOPSIS:
-#   load_from_file [-hd STR] [-default DICT] [-path STR] [-cb CB_AND_PRIV]
+#   load_from_file [-hd STR] [-default CAS] [-path STR] [-cb CB_AND_PRIV]
 #     FILE_NAME
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default DICT
-#       use DICT as an initial(default) conf.
+#   -default CAS
+#       use CAS(list with 2 elements: conf and spec) as an initial(default)
+#       conf.
 #   -path STR
 #       use STR as file path prefix for every included file
 #   -cb CB_AND_PRIV
@@ -54,7 +55,7 @@ proc load_from_file {args} {
 	_ctx_src_push ctx $src
 
 	set err ""
-	if {[catch {_parse ctx [dict get $ctx prms -default]} conf]} {
+	if {[catch {_parse ctx [dict get $ctx default]} conf]} {
 		set err [list $conf $::errorInfo $::errorCode]
 	}
 
@@ -72,12 +73,13 @@ proc load_from_file {args} {
 
 # Load a conf from an open file handle.
 # SYNOPSIS:
-#   load_from_fh [-hd STR] [-default DICT] [-path STR] [-cb CB_AND_PRIV] CHAN
+#   load_from_fh [-hd STR] [-default CAS] [-path STR] [-cb CB_AND_PRIV] CHAN
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default DICT
-#       use DICT as an initial(default) conf.
+#   -default CAS
+#       use CAS(list with 2 elements: conf and spec) as an initial(default)
+#       conf.
 #   -path STR
 #       use STR as file path prefix for every included file
 #   -cb CB_AND_PRIV
@@ -103,7 +105,7 @@ proc load_from_fh {args} {
 
 	set ctx [_ctx_mk $opts]
 	_ctx_src_push ctx $src
-	set conf [_parse ctx [dict get $ctx prms -default]]
+	set conf [_parse ctx [dict get $ctx default]]
 	_ctx_src_pop ctx
 
 	if {[dict exists $opts -cb]} {
@@ -114,13 +116,14 @@ proc load_from_fh {args} {
 
 # Load a conf from a string.
 # SYNOPSIS:
-#   load_from_str [-hd STR] [-default DICT] [-path STR] [-cb CB_AND_PRIV]
+#   load_from_str [-hd STR] [-default CAS] [-path STR] [-cb CB_AND_PRIV]
 #     [-s START_IDX] [-e END_IDX] CONF_STR
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default DICT
-#       use DICT as an initial(default) conf.
+#   -default CAS
+#       use CAS(list with 2 elements: conf and spec) as an initial(default)
+#       conf.
 #   -path STR
 #       use STR as file path prefix for every included file
 #   -cb CB_AND_PRIV
@@ -157,7 +160,7 @@ proc load_from_str {args} {
 	set ctx [_ctx_mk $opts]
 	_ctx_src_push ctx $src
 #	puts "CTX: $ctx"
-	set conf [_parse ctx [dict get $ctx prms -default]]
+	set conf [_parse ctx [dict get $ctx default]]
 	_ctx_src_pop ctx
 
 	if {[dict exists $opts -cb]} {
@@ -344,7 +347,7 @@ proc _parse_file_inclusion {_ctx _conf fmask} {
 # prms:
 #  prms - a dict with parameters:
 #         -hd - hierarchy delimiter
-#         -default - a string with a default conf
+#         -default - a list with a default conf and its spec
 #         -path    - a string with a default file path prefix
 #         -cb      - a value set/append callback
 #         -s  - start offset for src str(only for gets_from_str)
@@ -368,12 +371,15 @@ proc _ctx_mk {{prms ""}} {
 	}
 	set cb [lindex [dict get $prms -cb] 0]
 	set priv [lindex [dict get $prms -cb] 1]
+	set default [lindex [dict get $prms -default] 0]
+	set cspec [lindex [dict get $prms -default] 1]
 
 	return [dict create\
 	  prms $prms\
 	  cb $cb\
 	  priv $priv\
-	  cspec [dict create]\
+	  default $default\
+	  cspec $cspec\
 	  src [dict create]\
 	  srcs [list]\
 	  sect [list]\
