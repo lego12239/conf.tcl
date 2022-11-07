@@ -15,6 +15,7 @@ Synopsis
   load_from_file [-hd STR] [-default DICT] FILE_NAME
   load_from_fh [-hd STR] [-default DICT] CHAN
   load_from_str [-hd STR] [-default DICT] [-s START_INDEX] [-e END_INDEX] CONF_STR
+  get_key CAS NAME [TYPE]
 ```
 
 Where parameters:
@@ -34,8 +35,9 @@ Conf consists from key-value pairs, which can be grouped in sections.
 Whitespaces are ignored. Comment can be started by # symbols at almost any
 place(excluding # inside a quoted string). Key, value and section name can
 consist of any chars exclude any space chars, '=', '#', '"', '[', ']', '{',
-'}'. If a key, value or section name contains any of these characters,
-then the entire key, value or section name must be enclosed in double quotes.
+'}', '+', '?'. If a key, value or section name contains any of these
+characters, then the entire key, value or section name must be enclosed in
+double quotes.
 In this case, if double quotes appears inside the value, it must be escaped
 with a backslash(\).
 
@@ -206,7 +208,8 @@ g4.g5 {
 ```
 loaded with `load_from_file -hd . my.conf` returns:
 
-g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2 k3 {k4 v3} g3 {k4 v4 g4 {g5 {k5 {k6 v6}}} g7 {g8 {k7 {k8 v7}}}}}
+g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2 k3 {k4 v3} g3 {k4 v4}} g4 {g5 {k5 {k6 v6} g7 {g8 {k7 {k8 v7}}}}}
+
 
 Conf with comments
 ------------------
