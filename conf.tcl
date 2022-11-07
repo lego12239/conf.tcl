@@ -923,17 +923,17 @@ proc spec_path_unset {_cspec names} {
 # A dict spec for this dict is:
 #  set d [dict create k1 {k2 {k3 S}}]
 # So:
-# % spec_key_existence $d {k1 k2 k3 k4} val
+# % spec_key_existence d {k1 k2 k3 k4} val
 # -2
 # % puts $val
 # k1 k2 k3
-# % spec_key_existence $d {k1 k4}
+# % spec_key_existence d {k1 k4}
 # -1
-# % spec_key_existence $d {k1 k2 k3} val
+# % spec_key_existence d {k1 k2 k3} val
 # 0
 # % puts $val
 # S
-# % spec_key_existence $d {k1 k2}
+# % spec_key_existence d {k1 k2}
 # 1
 proc spec_key_existence {_cspec names {_out ""}} {
 	upvar [lindex $_cspec 0] cspec0
