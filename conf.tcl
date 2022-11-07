@@ -935,7 +935,7 @@ proc spec_path_unset {_cspec names} {
 # S
 # % spec_key_existence $d {k1 k2}
 # 1
-proc spec_key_existence {_cspec names {_val ""}} {
+proc spec_key_existence {_cspec names {_out ""}} {
 	upvar [lindex $_cspec 0] cspec0
 	if {[llength $_cspec] > 1} {
 		set v [dict get $cspec0 {*}[lrange $_cspec 1 end]]
@@ -953,8 +953,8 @@ proc spec_key_existence {_cspec names {_val ""}} {
 		set v [dict get $v $k]
 		if {$i < $len} {
 			if {($v eq "S") || ($v eq "L")} {
-				if {$_val ne ""} {
-					upvar $_val val
+				if {$_out ne ""} {
+					upvar $_out val
 					set val [lrange $names 0 $i]
 				}
 				return -2
@@ -966,8 +966,8 @@ proc spec_key_existence {_cspec names {_val ""}} {
 		}
 	}
 
-	if {$_val ne ""} {
-		upvar $_val val
+	if {$_out ne ""} {
+		upvar $_out val
 		set val $v
 	}
 	return 0
