@@ -955,6 +955,71 @@ proc spec_key_existence {_cspec names {_val ""}} {
 	return 0
 }
 
+# Compare a cspec against a reference cspec
+# prms:
+#  ref   - reference cspec, where a value of a leaf key can be:
+#          S - string
+#          L - list
+#          A - string or list
+#          c - any conf hierarchy
+#          C - any conf hierarchy or string or list
+#  cspec - cspec to compare
+# ret:
+#  LIST - each item is a mismatch entry which is a list, where 1 item is
+#         a mismatch type and 2 item is full path to a key:
+#         {M KEY_PATH} - miss, KEY_PATH from ref is missed from cspec
+#         {T KEY_PATH} - wrong type, KEY_PATH from ref is different type
+#                        than in cspec
+#         {E KEY_PATH} - excess, KEY_PATH from cspec is missed from ref
+proc spec_cmp {ref cspec} {
+	return [_spec_cmp $ref $cspec]
+}
+
+proc _spec_cmp {ref cspec {prefix ""}} {
+	set res [list]
+
+#	puts "ENTER: $prefix"
+	dict for {k vref} $ref {
+#		puts "$k: $vref"
+		if {![dict exists $cspec $k]} {
+			lappend res [list M [list {*}$prefix $k]]
+			continue
+		}
+		set v [dict get $cspec $k]
+#		puts "=$k: $v"
+		if {($vref eq "S") || ($vref eq "L")} {
+			if {$vref ne $v} {
+				lappend res [list T [list {*}$prefix $k]]
+			}
+			continue
+		} elseif {$vref eq "A"} {
+			if {($v ne "S") && ($v ne "L")} {
+				lappend res [list T [list {*}$prefix $k]]
+			}
+			continue
+		} elseif {$vref eq "c"} {
+			if {($v eq "S") || ($v eq "L")} {
+				lappend res [list T [list {*}$prefix $k]]
+			}
+			continue
+		} elseif {$vref eq "C"} {
+			continue
+		}
+		if {($v eq "S") || ($v eq "L")} {
+			lappend res [list T [list {*}$prefix $k]]
+			continue
+		}
+		lappend res {*}[_spec_cmp $vref $v [list {*}$prefix $k]]
+	}
+	# Collect excess keys
+	dict for {k v} $cspec {
+		if {![dict exists $ref $k]} {
+			lappend res [list E [list {*}$prefix $k]]
+		}
+	}
+
+	return $res
+}
 }
 
 package provide conf 0.10
