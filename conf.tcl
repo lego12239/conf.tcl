@@ -846,11 +846,12 @@ proc gets_from_str {_ctx _var} {
 # thrown. If type is specified and it isn't equal to key type, then exception is
 # thrown.
 proc get_key {cas names {type ""}} {
-	set ret [conf::spec_key_existence [lindex $cas 1] $names val]
-	if {[$ret != 0]} {
-		throw [list CONF NOKEY $names $ret] "conf error: $ret: no key {$names}"
+	set cspec [lindex $cas 1]
+	set ret [conf::spec_key_existence cspec $names val]
+	if {$ret != 0} {
+		throw [list CONF NOKEY $names $ret] "conf error(ecode $ret): no key {$names}"
 	}
-	set value [dict get [lindex $cas 0] $names]
+	set value [dict get [lindex $cas 0] {*}$names]
 	if {($type ne "") && ($type ne $val)} {
 		throw [list CONF WRONGTYPE $names $val] "conf error: key {$names} has type\
 		  $val instead of $type"
