@@ -48,6 +48,7 @@ proc load_from_file {args} {
 	}
 	set fh [open [lindex $args $idx]]
 	set src [dict create\
+	  name [lindex $args $idx]\
 	  src $fh\
 	  gets_r [namespace current]::gets_from_fh]
 
@@ -100,6 +101,7 @@ proc load_from_fh {args} {
 		error "Too many chans are specified"
 	}
 	set src [dict create\
+	  name "FH:[lindex $args $idx]"\
 	  src [lindex $args $idx]\
 	  gets_r [namespace current]::gets_from_fh]
 
@@ -149,6 +151,7 @@ proc load_from_str {args} {
 		error "Too many strings are specified"
 	}
 	set src [dict create\
+	  name "STR"\
 	  src [lindex $args $idx]\
 	  gets_r [namespace current]::gets_from_str]
 	set opts [dict merge\
@@ -214,25 +217,32 @@ proc _opts_parse {argslist spec} {
 proc _parse {_ctx conf} {
 	upvar $_ctx ctx
 	set err ""
+	set emsg ""
 	if {[catch {__parse ctx $conf} conf]} {
-		if {$::errorCode ne "CONFERR"} {
-			if {[dict get $ctx src lineno_tok] != 0} {
-				set err "conf lines: from [_toks_lineno ctx 0] to [dict get $ctx src lineno_tok]"
-			}
-			error "$conf\($err)" "$err\n$::errorInfo" $::errorCode
+		if {[_toks_cnt ctx] > 0} {
+			set err_from_lineno [_toks_lineno ctx 0]
 		}
-		set err $conf
+		# file name and line numbers shouldn't be separated by space
+#		set emsg "[dict get $ctx src name]:${err_from_lineno}-[dict get $ctx src lineno_tok]"
+		set emsg "[dict get $ctx src name]:${err_from_lineno}"
+		set emsg "conf error at $emsg"
+		set err [list "${emsg}: $conf" "$emsg\n$::errorInfo" $::errorCode]
 	}
 	if {[dict get $ctx src buf] ne ""} {
+		set emsg [lindex $err 0]
 		if {[string index [dict get $ctx src buf] 0] eq {"}} {
-			error "$err\npossible unclosed quotes at\
-			  [dict get $ctx src lineno_tok] line" "" CONFERR
+			lset err 0 "${emsg}. Possible unclosed quotes at line\
+			  [dict get $ctx src lineno_tok]"
 		} else {
-			error "$err\ntoken input buffer: '[dict get $ctx src buf]'" "" CONFERR
+			lset err 0 "${emsg}. Token input buffer:\
+			  '[dict get $ctx src buf]'"
 		}
-	} elseif {$err ne ""} {
-		error "$err" "" CONFERR
 	}
+
+	if {$err ne ""} {
+		error {*}$err
+	}
+
 	return $conf
 }
 
@@ -282,10 +292,9 @@ proc __parse {_ctx conf} {
 			_parse_file_inclusion ctx conf $fmask
 #			puts "sect: [dict get $ctx sect]"
 		} else {
-			error "parse error at [dict get $ctx src lineno_tok] line:\
-			  unexpected token sequence at [_toks_lineno ctx 0] line:\
-			  [_toks_dump ctx]\n\
-			  want: KEY = VAL or KEY = \[ or GROUP_NAME \{ or \} or\
+			error "unexpected token sequence:\
+			  \"[_toks_dump ctx]\". Want:\
+			  KEY = VAL or KEY = \[ or GROUP_NAME \{ or \} or\
 			  \[GROUP_NAME\]" "" CONFERR
 		}
 	}
@@ -310,10 +319,9 @@ proc _parse_list {_ctx} {
 			_toks_drop ctx 1
 			break
 		} else {
-			error "parse error at [dict get $ctx src lineno_tok] line:\
-			  unexpected token sequence at [_toks_lineno ctx 0] line:\
-			  [_toks_dump ctx]\n\
-			  want: VAL or \[ or \]" "" CONFERR
+			error "unexpected token sequence:\
+			  \"[_toks_dump ctx]\".\
+			  Want: VAL or \[ or \]" "" CONFERR
 		}
 	}
 
@@ -328,17 +336,18 @@ proc _parse_file_inclusion {_ctx _conf fmask} {
 	foreach fname $fnames {
 		set fh [open $fname]
 		set src [dict create\
+		  name "$fname"\
 		  src $fh\
 		  gets_r [namespace current]::gets_from_fh]
 		_ctx_src_push ctx $src
 		set err ""
 		if {[catch {_parse ctx $conf} conf]} {
-			set err $conf
+			set err [list $conf $::errorInfo $::errorCode]
 		}
 		_ctx_src_pop ctx
 		close $fh
 		if {$err ne ""} {
-			error $err $::errorInfo $::errorCode
+			error {*}$err
 		}
 	}
 }
@@ -388,6 +397,8 @@ proc _ctx_mk {{prms ""}} {
 
 # Push to a stack a specified src data and set it as a current src.
 # src keys:
+#   common:
+#     name - a source name(e.g. filename) for error reporting
 #   for lexer:
 #     src - a source(string, CHAN or other data specific for a source)
 #     gets_r - a routine for next line reading(must work like a gets)
@@ -400,6 +411,7 @@ proc _ctx_mk {{prms ""}} {
 proc _ctx_src_push {_ctx src} {
 	upvar $_ctx ctx
 	set src_def [dict create\
+	  name ""\
 	  gets_r ""\
 	  lineno 0\
 	  lineno_tok 0\
@@ -694,6 +706,12 @@ proc _toks_dump {_ctx} {
 		set res "$res'[lindex $tok 1]'#[lindex $tok 0](L[lindex $tok 2]) "
 	}
 	return [string range $res 0 end-1]
+}
+
+proc _toks_cnt {_ctx} {
+	upvar $_ctx ctx
+
+	return [llength [dict get $ctx src toks]]
 }
 
 # Get a next token.
