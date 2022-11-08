@@ -875,6 +875,23 @@ proc escape_value {val} {
 ######################################################################
 # spec manipulation routines
 ######################################################################
+# Get a specified key value
+# prms:
+#  cspec - a config specification
+#  names - a key full name(separated with spaces)
+# ret:
+#  VALUE - S, L, c(if key is a section) or M(if key is missed)
+proc spec_key_get {cspec names} {
+	set val ""
+	set ret [spec_key_existence cspec $names val]
+	if {$ret < 0} {
+		return "M"
+	} elseif {$ret > 0} {
+		return "c"
+	}
+	return $val
+}
+
 # Set a specified key to a specified value
 # prms:
 #  _cspec - a var name of config specification.
