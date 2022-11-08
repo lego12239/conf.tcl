@@ -882,7 +882,7 @@ proc escape_value {val} {
 #           and next names are full name of config specification key saved
 #           in this dict.
 #  names  - a key full name(separated with spaces)
-#  value  - a new value for a key
+#  value  - a new value for a key(S or L)
 proc spec_key_set {_cspec names value} {
 	if {($value ne "S") && ($value ne "L")} {
 		error "wrong cspec key value: $value"
@@ -928,7 +928,7 @@ proc spec_path_unset {_cspec names} {
 #       $_out var contains existent part of key path(a part of names list)
 #  -1 - specified key doesn't exists
 #   0 - specified key exists and it is a leaf key
-#       $_out var contains
+#       $_out var contains a value of a specified key
 #   1 - specified key exists, but it is not a leaf key
 #
 # E.g. we have a dict:
