@@ -860,6 +860,18 @@ proc get_key {cas names {type ""}} {
 	return $value
 }
 
+# Escape specified value according to conf syntax.
+# prms:
+#  val  - a value to escape
+# ret:
+#  ESCAPED_VAL - escaped value, can be enclosed in double quotes
+proc escape_value {val} {
+	if {[regexp {^[^\]\[[:space:]=#"{}+?]+$} $val]} {
+		return $val
+	}
+	return "\"[regsub -all {"} $val {\\"}]\""
+}
+
 ######################################################################
 # spec manipulation routines
 ######################################################################
