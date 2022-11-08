@@ -56,7 +56,7 @@ tcltest::test internals-4.0 {
 	spec_key_existence ret is -2
 } -body {
 	set d [dict create k1 {k2 {k3 S}}]
-	conf::spec_key_existence d {k1 k2 k3 k4}
+	conf::spec_key_existence $d {k1 k2 k3 k4}
 } -result {-2}
 
 tcltest::test internals-4.0.1 {
@@ -64,7 +64,7 @@ tcltest::test internals-4.0.1 {
 } -body {
 	set names ""
 	set d [dict create k1 {k2 {k3 S}}]
-	set ret [conf::spec_key_existence d {k1 k2 k3 k4} names]
+	set ret [conf::spec_key_existence $d {k1 k2 k3 k4} names]
 	return [list $ret $names]
 } -result {-2 {k1 k2 k3}}
 
@@ -72,14 +72,14 @@ tcltest::test internals-4.1 {
 	spec_key_existence ret is -1
 } -body {
 	set d [dict create k1 {k2 {k3 S}}]
-	conf::spec_key_existence d {k1 k4}
+	conf::spec_key_existence $d {k1 k4}
 } -result {-1}
 
 tcltest::test internals-4.2 {
 	spec_key_existence ret is 0, S
 } -body {
 	set d [dict create k1 {k2 {k3 S}}]
-	set ret [conf::spec_key_existence d {k1 k2 k3} data]
+	set ret [conf::spec_key_existence $d {k1 k2 k3} data]
 	return [list $ret $data]
 } -result {0 S}
 
@@ -87,7 +87,7 @@ tcltest::test internals-4.2.1 {
 	spec_key_existence ret is 0, L
 } -body {
 	set d [dict create k1 {k2 {k3 L}}]
-	set ret [conf::spec_key_existence d {k1 k2 k3} data]
+	set ret [conf::spec_key_existence $d {k1 k2 k3} data]
 	return [list $ret $data]
 } -result {0 L}
 
@@ -95,7 +95,7 @@ tcltest::test internals-4.3 {
 	spec_key_existence ret is 1
 } -body {
 	set d [dict create k1 {k2 {k3 S}}]
-	conf::spec_key_existence d {k1 k2}
+	conf::spec_key_existence $d {k1 k2}
 } -result {1}
 
 tcltest::cleanupTests
