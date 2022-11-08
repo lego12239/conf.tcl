@@ -879,14 +879,14 @@ proc escape_value {val} {
 #  cspec - a config specification
 #  names - a key full name(separated with spaces)
 # ret:
-#  VALUE - S, L, c(if key is a section) or -(if key is missed)
+#  VALUE - S, L, A, c, C, sect(if key is a section) or -(if key is missed)
 proc spec_key_get {cspec names} {
 	set val ""
 	set ret [spec_key_existence $cspec $names val]
 	if {$ret < 0} {
 		return "-"
 	} elseif {$ret > 0} {
-		return "c"
+		return "sect"
 	}
 	return $val
 }
