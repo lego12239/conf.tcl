@@ -976,7 +976,7 @@ proc spec_key_existence {cspec names {_out ""}} {
 		}
 		set v [dict get $v $k]
 		if {$i < $len} {
-			if {($v eq "S") || ($v eq "L")} {
+			if {[string match {[SLAcC]} $v]} {
 				if {$_out ne ""} {
 					upvar $_out val
 					set val [lrange $names 0 $i]
@@ -984,7 +984,7 @@ proc spec_key_existence {cspec names {_out ""}} {
 				return -2
 			}
 		} else {
-			if {($v ne "S") && ($v ne "L")} {
+			if {![string match {[SLAcC]} $v]} {
 				return 1
 			}
 		}
