@@ -49,6 +49,6 @@ tcltest::test spec-3.0 {
 } -body {
 	set cspec {k1 S k2 {k21 L}}
 	conf::spec_key_get $cspec {k2}
-} -result {c}
+} -result {sect}
 
 tcltest::cleanupTests
