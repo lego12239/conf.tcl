@@ -934,7 +934,9 @@ proc spec_path_unset {_cspec names} {
 # Return key existence state.
 # prms:
 #  spec   - specification of some dict, where key is a key and
-#           a leaf value is a dot
+#           a leaf value is a S for string or L for list;
+#           or specification pattern, where key is a key and
+#           a leaf value is a S, L, A, c or C(see spec_cmp)
 #  names  - a key full path(keys separated by spaces)
 #  _out   - a variable name to save some data in addition to ret value;
 #           this data is different for each ret value(see description of ret
