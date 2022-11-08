@@ -517,7 +517,7 @@ proc _conf_kv_set_list {_ctx _conf name vlist {op "=L"}} {
 	# Protect from a case where we assign to an existing key as if it would
 	# be a section. E.g. "k1=\[k2 v2 k4 v4\] k1.k4=v44" config can
 	# mistakenly got {k1 {k2 v2 k4 v44}} instead of {k1 {k4 v44}}.
-	set ret [spec_key_existence {ctx cspec} $names data]
+	set ret [spec_key_existence [dict get $ctx cspec] $names data]
 	if {$ret == -2} {
 		dict set conf {*}$data ""
 		spec_path_unset {ctx cspec} $data
@@ -556,7 +556,7 @@ proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist {op "?=L"}} {
 			return
 		}
 	}
-	set ret [spec_key_existence {ctx cspec} $names]
+	set ret [spec_key_existence [dict get $ctx cspec] $names]
 	if {$ret != -1} {
 		return
 	}
@@ -600,7 +600,7 @@ proc _conf_kv_append_list {_ctx _conf name vlist {op "+=L"}} {
 	}
 	# Protect from reassign mistakes. See _conf_kv_set proc for the
 	# explanation.
-	set ret [spec_key_existence {ctx cspec} $names data]
+	set ret [spec_key_existence [dict get $ctx cspec] $names data]
 	if {$ret == -2} {
 		dict set conf {*}$data ""
 		spec_path_unset {ctx cspec} $data
@@ -846,8 +846,7 @@ proc gets_from_str {_ctx _var} {
 # thrown. If type is specified and it isn't equal to key type, then exception is
 # thrown.
 proc get_key {cas names {type ""}} {
-	set cspec [lindex $cas 1]
-	set ret [conf::spec_key_existence cspec $names val]
+	set ret [conf::spec_key_existence [lindex $cas 1] $names val]
 	if {$ret != 0} {
 		throw [list CONF NOKEY $names $ret] "conf error(ecode $ret): no key {$names}"
 	}
@@ -883,7 +882,7 @@ proc escape_value {val} {
 #  VALUE - S, L, c(if key is a section) or M(if key is missed)
 proc spec_key_get {cspec names} {
 	set val ""
-	set ret [spec_key_existence cspec $names val]
+	set ret [spec_key_existence $cspec $names val]
 	if {$ret < 0} {
 		return "M"
 	} elseif {$ret > 0} {
@@ -953,25 +952,20 @@ proc spec_path_unset {_cspec names} {
 # A dict spec for this dict is:
 #  set d [dict create k1 {k2 {k3 S}}]
 # So:
-# % spec_key_existence d {k1 k2 k3 k4} val
+# % spec_key_existence $d {k1 k2 k3 k4} val
 # -2
 # % puts $val
 # k1 k2 k3
-# % spec_key_existence d {k1 k4}
+# % spec_key_existence $d {k1 k4}
 # -1
-# % spec_key_existence d {k1 k2 k3} val
+# % spec_key_existence $d {k1 k2 k3} val
 # 0
 # % puts $val
 # S
-# % spec_key_existence d {k1 k2}
+# % spec_key_existence $d {k1 k2}
 # 1
-proc spec_key_existence {_cspec names {_out ""}} {
-	upvar [lindex $_cspec 0] cspec0
-	if {[llength $_cspec] > 1} {
-		set v [dict get $cspec0 {*}[lrange $_cspec 1 end]]
-	} else {
-		set v $cspec0
-	}
+proc spec_key_existence {cspec names {_out ""}} {
+	set v $cspec
 
 	set len [llength $names]
 	incr len -1
