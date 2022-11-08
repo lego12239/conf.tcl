@@ -108,7 +108,6 @@ proc load_from_file {args} {
 #       Callback must ret value type(S or L) or "" if value shouldn't be
 #       saved(we don't want it or we already saved it ourselves in a
 #       callback).
-ed.
 # RETURN:
 #   {CONF CSPEC}   - dict with conf parameters, conf dict specification
 #   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
@@ -164,7 +163,6 @@ proc load_from_fh {args} {
 #       Callback must ret value type(S or L) or "" if value shouldn't be
 #       saved(we don't want it or we already saved it ourselves in a
 #       callback).
-ed.
 #   -s START_IDX
 #       start index for the parsing
 #   -e END_IDX
