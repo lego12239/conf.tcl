@@ -33,7 +33,17 @@ namespace eval conf {
 #       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
 #       proc as value set/append callback; and specified PRIV will be
 #       used as initial value for priv in a context.
-#       Callback must ret value type(S or L) or "" if value shouldn't be saved.
+#       Callback must accept parameters:
+#       - ctx var name
+#       - conf var name
+#       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
+#       - var name with key full name(list with sect names and a key name)
+#       - value var name
+#       If key name and/or key value is changed, then this new key and/or
+#       value will be saved in a parsed conf dict.
+#       Callback must ret value type(S or L) or "" if value shouldn't be
+#       saved(we don't want it or we already saved it ourselves in a
+#       callback).
 # RETURN:
 #   {CONF CSPEC}   - dict with conf parameters, conf dict specification
 #   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
@@ -87,7 +97,18 @@ proc load_from_file {args} {
 #       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
 #       proc as value set/append callback; and specified PRIV will be
 #       used as initial value for priv in a context.
-#       Callback must ret value type(S or L) or "" if value shouldn't be saved.
+#       Callback must accept parameters:
+#       - ctx var name
+#       - conf var name
+#       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
+#       - var name with key full name(list with sect names and a key name)
+#       - value var name
+#       If key name and/or key value is changed, then this new key and/or
+#       value will be saved in a parsed conf dict.
+#       Callback must ret value type(S or L) or "" if value shouldn't be
+#       saved(we don't want it or we already saved it ourselves in a
+#       callback).
+ed.
 # RETURN:
 #   {CONF CSPEC}   - dict with conf parameters, conf dict specification
 #   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
@@ -132,7 +153,18 @@ proc load_from_fh {args} {
 #       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
 #       proc as value set/append callback; and specified PRIV will be
 #       used as initial value for priv in a context.
-#       Callback must ret value type(S or L) or "" if value shouldn't be saved.
+#       Callback must accept parameters:
+#       - ctx var name
+#       - conf var name
+#       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
+#       - var name with key full name(list with sect names and a key name)
+#       - value var name
+#       If key name and/or key value is changed, then this new key and/or
+#       value will be saved in a parsed conf dict.
+#       Callback must ret value type(S or L) or "" if value shouldn't be
+#       saved(we don't want it or we already saved it ourselves in a
+#       callback).
+ed.
 #   -s START_IDX
 #       start index for the parsing
 #   -e END_IDX
