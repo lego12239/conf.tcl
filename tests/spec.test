@@ -1,0 +1,54 @@
+lappend auto_path [pwd]/../
+package require tcltest
+package require conf
+
+tcltest::test spec-1.0 {
+	spec_key_get, S or L
+} -body {
+	set cspec {k1 S k2 {k21 L}}
+	conf::spec_key_get $cspec k1
+} -result {S}
+
+tcltest::test spec-1.1 {
+	spec_key_get, S or L
+} -body {
+	set cspec {k1 S k2 {k21 L}}
+	conf::spec_key_get $cspec {k2 k21}
+} -result {L}
+
+tcltest::test spec-2.0 {
+	spec_key_get, M
+} -body {
+	set cspec {k1 S k2 {k21 L}}
+	conf::spec_key_get $cspec {k3}
+} -result {M}
+
+tcltest::test spec-2.1 {
+	spec_key_get, M
+} -body {
+	set cspec {k1 S k2 {k21 L}}
+	conf::spec_key_get $cspec {k1 k11}
+} -result {M}
+
+tcltest::test spec-2.2 {
+	spec_key_get, M
+} -body {
+	set cspec {k1 S k2 {k21 L}}
+	conf::spec_key_get $cspec {k2 k22}
+} -result {M}
+
+tcltest::test spec-2.3 {
+	spec_key_get, M
+} -body {
+	set cspec {k1 S k2 {k21 L}}
+	conf::spec_key_get $cspec {k2 k21 k211 k2111}
+} -result {M}
+
+tcltest::test spec-3.0 {
+	spec_key_get, c
+} -body {
+	set cspec {k1 S k2 {k21 L}}
+	conf::spec_key_get $cspec {k2}
+} -result {c}
+
+tcltest::cleanupTests
