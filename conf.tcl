@@ -860,7 +860,7 @@ proc get_key {cas names {type ""}} {
 	return $value
 }
 
-# Escape specified value according to conf syntax.
+# Escape specified value according to conf syntax rules.
 # prms:
 #  val  - a value to escape
 # ret:
