@@ -954,7 +954,7 @@ proc escape_value {val} {
 ######################################################################
 # Get a specified key value
 # prms:
-#  cspec - a config specification
+#  cspec - a config specification or a config specification pattern
 #  names - a key full name(separated with spaces)
 # ret:
 #  VALUE - S, L, A, c, C, sect(if key is a section) or -(if key is missed)
@@ -1090,10 +1090,10 @@ proc spec_key_existence {cspec names {_out ""}} {
 # ret:
 #  LIST - each item is a mismatch entry which is a list, where 1 item is
 #         a mismatch type and 2 item is full path to a key:
-#         {M KEY_PATH} - miss, KEY_PATH from ref is missed from cspec
-#         {T KEY_PATH} - wrong type, KEY_PATH from ref is different type
+#         {M KEY_PATH} - miss, KEY_PATH from pattern is missed from cspec
+#         {T KEY_PATH} - wrong type, KEY_PATH from pattern is different type
 #                        than in cspec
-#         {E KEY_PATH} - excess, KEY_PATH from cspec is missed from ref
+#         {E KEY_PATH} - excess, KEY_PATH from cspec is missed from pattern
 proc spec_cmp {pattern cspec} {
 	return [_spec_cmp $pattern $cspec]
 }
