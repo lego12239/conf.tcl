@@ -283,13 +283,13 @@ proc __parse {_ctx conf} {
 
 	while {[_toks_get ctx 3] > 0} {
 		if {[_toks_match ctx "6 1 6 "]} {
-			_conf_kv_set ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
+			_conf_kv_set_str ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 9 6 "]} {
-			_conf_kv_append ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
+			_conf_kv_append_str ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 10 6 "]} {
-			_conf_kv_set_if_not_exist ctx conf [_toks_str ctx 0]\
+			_conf_kv_set_str_if_not_exist ctx conf [_toks_str ctx 0]\
 			  [_toks_str ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 1 4 "]} {
@@ -515,22 +515,38 @@ proc _sect_get {_ctx} {
 
 # Assign a specified value to a specified name
 # prms:
-#  _ctx - ctx var name
-#  name - a conf parameter name(string)
+#  _ctx   - ctx var name
+#  _conf  - conf var name
+#  name   - a conf parameter name(string)
 #  value  - a conf parameter value
-proc _conf_kv_set {_ctx _conf name value} {
+proc _conf_kv_set_str {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_set_list ctx conf $name $value "=S"
+	_conf_kv_set ctx conf $name $value "=S"
 }
 
-# Assign a specified values list to a specified name
+# Assign a specified list to a specified name
 # prms:
-#  _ctx - ctx var name
-#  name - a conf parameter name(string)
+#  _ctx   - ctx var name
+#  _conf  - conf var name
+#  name   - a conf parameter name(string)
+#  value  - a conf parameter value(list)
+proc _conf_kv_set_list {_ctx _conf name value} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	_conf_kv_set ctx conf $name $value "=L"
+}
+
+# Assign a specified value to a specified name
+# prms:
+#  _ctx   - ctx var name
+#  _conf  - conf var name
+#  name   - a conf parameter name(string)
 #  vlist  - a conf parameter value
-proc _conf_kv_set_list {_ctx _conf name vlist {op "=L"}} {
+#  op     - operation (=S or =L)
+proc _conf_kv_set {_ctx _conf name vlist op} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 	set data ""
@@ -558,22 +574,38 @@ proc _conf_kv_set_list {_ctx _conf name vlist {op "=L"}} {
 
 # Assign a specified value to a specified name if it's not exist.
 # prms:
-#  _ctx - ctx var name
-#  name - a conf parameter name(string)
+#  _ctx   - ctx var name
+#  _conf  - conf var name
+#  name   - a conf parameter name(string)
 #  value  - a conf parameter value
-proc _conf_kv_set_if_not_exist {_ctx _conf name value} {
+proc _conf_kv_set_str_if_not_exist {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_set_list_if_not_exist ctx conf $name $value "?=S"
+	_conf_kv_set_if_not_exist ctx conf $name $value "?=S"
 }
 
-# Assign a specified values list to a specified name if it's not exist.
+# Assign a specified list to a specified name if it's not exist.
 # prms:
-#  _ctx - ctx var name
-#  name - a conf parameter name(string)
+#  _ctx   - ctx var name
+#  _conf  - conf var name
+#  name   - a conf parameter name(string)
+#  value  - a conf parameter value(list)
+proc _conf_kv_set_list_if_not_exist {_ctx _conf name value} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	_conf_kv_set_if_not_exist ctx conf $name $value "?=L"
+}
+
+# Assign a specified value to a specified name if it's not exist.
+# prms:
+#  _ctx   - ctx var name
+#  _conf  - conf var name
+#  name   - a conf parameter name(string)
 #  vlist  - a conf parameter value
-proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist {op "?=L"}} {
+#  op     - "?=S" or "?=L"
+proc _conf_kv_set_if_not_exist {_ctx _conf name vlist op} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
@@ -596,22 +628,38 @@ proc _conf_kv_set_list_if_not_exist {_ctx _conf name vlist {op "?=L"}} {
 
 # Append a specified value to a specified name
 # prms:
-#  _ctx - ctx var name
-#  name - a conf parameter name(string)
+#  _ctx   - ctx var name
+#  _conf  - conf var name
+#  name   - a conf parameter name(string)
 #  value  - a conf parameter value
-proc _conf_kv_append {_ctx _conf name value} {
+proc _conf_kv_append_str {_ctx _conf name value} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
-	_conf_kv_append_list ctx conf $name $value "+=S"
+	_conf_kv_append ctx conf $name $value "+=S"
+}
+
+# Append a specified list to a specified name
+# prms:
+#  _ctx   - ctx var name
+#  _conf  - conf var name
+#  name   - a conf parameter name(string)
+#  value  - a conf parameter value(list)
+proc _conf_kv_append_list {_ctx _conf name value} {
+	upvar $_ctx ctx
+	upvar $_conf conf
+
+	_conf_kv_append ctx conf $name $value "+=L"
 }
 
 # Append a specified values list to a specified name
 # prms:
 #  _ctx - ctx var name
+#  _conf  - conf var name
 #  name - a conf parameter name(string)
 #  vlist  - a conf parameter value
-proc _conf_kv_append_list {_ctx _conf name vlist {op "+=L"}} {
+#  op     - "+=S" or "+=L"
+proc _conf_kv_append {_ctx _conf name vlist op} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 	set data ""
