@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <title>conf package manual</title>
+  <style type="text/css">
+    .var {
+      font-family: monospace;
+      font-style: italic;
+    }
+    .optmark {
+      font-family: monospace;
+      color: #009d20;
+    }
+    .optname {
+      font-family: monospace;
+      font-weight: bold;
+    }
+    .cmdname {
+      font-family: monospace;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<h1>Conf package</h1>
+
+<h2>Overview</h2>
+
+<p>
+conf package contains 3 main routines for text configuration file loading:
+
+<ul>
+  <li>
+    <code>conf::load_from_file</code> &ndash; to load a conf from a file
+  </li>
+  <li>
+    <code>conf::load_from_fh</code> &ndash; to load a conf from an open file handler
+  </li>
+  <li>
+    <code>conf::load_from_str</code> &ndash; to load a conf from a string
+  </li>
+</ul>
+</p>
+
+<p>
+And the next utility routines:
+
+<ul>
+  <li>
+    <code>conf::get_key</code> &ndash; get a specified key from a parsed
+    conf
+  </li>
+  <li>
+    <code>conf::escape_value</code> &ndash; escape a specified value
+    according to conf syntax rules
+  </li>
+  <li>
+    <code>conf::spec_key_existence</code> &ndash; return key existence
+    state
+  </li>
+  <li>
+    <code>conf::spec_cmp</code> &ndash; compare a cspec against a
+    reference cspec
+  </li>
+  <li>
+    <code>conf::spec_key_get</code> &ndash; get a value of a specified key
+  </li>
+</ul>
+
+<h2>Synopsis</h2>
+
+<div>
+  <code>
+    <span class="cmdname">load_from_file</span>
+    <span class="optmark">?</span><span class="optname">-hd</span>
+    <span class="var">STR</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-default</span>
+    <span class="var">CAS</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-path</span>
+    <span class="var">STR</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-cb</span>
+    <span class="var">CB_AND_PRIV</span><span class="optmark">?</span>
+
+    <span class="var">FILE_NAME</span>
+  </code>
+</div>
+<div>
+  <code>
+    <span class="cmdname">load_from_fh</span>
+    <span class="optmark">?</span><span class="optname">-hd</span>
+    <span class="var">STR</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-default</span>
+    <span class="var">CAS</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-path</span>
+    <span class="var">STR</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-cb</span>
+    <span class="var">CB_AND_PRIV</span><span class="optmark">?</span>
+
+    <span class="var">CHAN</span>
+  </code>
+</div>
+<div>
+  <code>
+    <span class="cmdname">load_from_str</span>
+    <span class="optmark">?</span><span class="optname">-hd</span>
+    <span class="var">STR</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-default</span>
+    <span class="var">CAS</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-path</span>
+    <span class="var">STR</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-cb</span>
+    <span class="var">CB_AND_PRIV</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-s</span>
+    <span class="var">START_INDEX</span><span class="optmark">?</span>
+
+    <span class="optmark">?</span><span class="optname">-e</span>
+    <span class="var">END_INDEX</span><span class="optmark">?</span>
+
+    <span class="var">CONF_STR</span>
+  </code>
+</div>
+<div>
+  <code>
+    <span class="cmdname">get_key</span>
+    <span class="var">CAS</span>
+    <span class="var">NAME</span>
+
+    <span class="optmark">?</span><span class="var">TYPE</span><span class="optmark">?</span>
+  </code>
+</div>
+<div>
+  <code>
+    <span class="cmdname">escape_value</span>
+    <span class="var">VALUE</span>
+  </code>
+</div>
+<div>
+  <code>
+    <span class="cmdname">spec_key_existence</span>
+    <span class="var">CSPEC_OR_PATTERN</span>
+    <span class="var">NAMES</span>
+
+    <span class="optmark">?</span><span class="var">_OUT</span><span class="optmark">?</span>
+  </code>
+</div>
+<div>
+  <code>
+    <span class="cmdname">spec_cmp</span>
+    <span class="var">CSPEC_OR_PATTERN</span>
+    <span class="var">CSPEC</span>
+  </code>
+</div>
+<div>
+  <code>
+    <span class="cmdname">spec_key_get</span>
+    <span class="var">CSPEC_OR_PATTERN</span>
+    <span class="var">NAMES</span>
+  </code>
+</div>
+
+<h2>Description</h2>
+
+<p>
+<span class="cmdname">load_from_file</span> command parse a specified
+file and returns a result as a list. Where:
+<ul>
+  <li>element #1 is a dict with a parsed conf</li>
+  <li>
+    element #2 is a dict with a conf specification for a parsed conf
+  </li>
+  <li>
+    element #3 (exists only if -cb is used) is callback private data
+  </li>
+</ul>
+This command accepts the next options:
+<dl>
+  <dt><span class="optname">-hd</span> <span class="var">STR</span></dt>
+  <dd>
+    use <span class="var">STR</span> as hierarchy delimiter in key
+    names and group names
+  </dd>
+  <dt>
+    <span class="optname">-default</span>
+    <span class="var">CAS</span>
+  </dt>
+  <dd>
+    use <span class="var">CAS</span>(list with 2 elements: parsed conf
+    and its spec) as an initial(default) conf.
+  </dd>
+  <dt>
+    <span class="optname">-path</span>
+    <span class="var">STR</span>
+  </dt>
+  <dd>
+    use <span class="var">STR</span> as file path prefix for every
+    included file
+  </dd>
+  <dt>
+    <span class="optname">-cb</span>
+    <span class="var">CB_AND_PRIV</span>
+  </dt>
+  <dd>
+    <span class="var">CB_AND_PRIV</span> is a list:
+    <code>{CALLBACK PRIV}</code>. Use specified <code>CALLBACK</code>
+    proc as value set/append callback; and specified <code>PRIV</code>
+    will be used as initial value for priv in a context.
+  </dd>
+</dl>
+</p>
+
+<p>
+<span class="cmdname">load_from_fh</span> command parse a data from a
+specified file handle(chan) and returns the same value as
+<span class="cmdname">load_from_file</span>.
+Options are the same as for <span class="cmdname">load_from_file</span>.
+</p>
+
+<p>
+<span class="cmdname">load_from_str</span> command parse a data from a
+specified string and returns the same value as
+<span class="cmdname">load_from_file</span>.
+Options are the same as for <span class="cmdname">load_from_file</span>
+with addition of:
+<dl>
+  <dt>
+    <span class="optname">-s</span>
+    <span class="var">START_INDEX</span>
+  </dt>
+  <dd>
+    start parsing of a string from specified position(in chars)
+  </dd>
+  <dt>
+    <span class="optname">-e</span>
+    <span class="var">END_INDEX</span>
+  </dt>
+  <dd>
+    end parsing of a string at specified position(in chars);
+    this will be the last character we read
+  </dd>
+</dl>
+</p>
+
+<p>
+<span class="cmdname">get_key</span> command find a specified key in a
+specified <span class="var">CAS</span>(conf and its spec)
+and returns a value of this key.
+<span class="var">CAS</span> is a value returned from any of load proc.
+Key is specified by list with names(e.g. <code>{s1 s2 k1}</code> for key
+k1 in section s2 which resides in section s1).
+If a specified key isn't found, then error is generated.
+Optionally, a key type(S for string or L for list) can be specified;
+in this case,
+if a specified key has a different type,
+then error is generated.
+</p>
+
+<p>
+<span class="cmdname">escape_value</span> command returns an escaped
+form(according to conf syntax rules) of specified value.
+</p>
+
+<p>
+<span class="cmdname">spec_key_existence</span> command tries to find a
+specified key(<span class="var">NAMES</span>) in a specified conf
+spec or conf spec pattern(<span class="var">CSPEC</span>) and returns a
+result(key existence state).
+In addition, for some ret codes an additional data saved in a specified
+variable(<span class="var">_OUT</span> &ndash;
+a name of a var for this data).
+This command returns:
+<dl>
+  <dt>-2</dt>
+  <dd>
+    specified key doesn't exists and some predecessor key is a leaf key;
+    <code>$_out</code> var contains existent part of key path(a part
+    of names list)
+  </dd>
+  <dt>-1</dt>
+  <dd>specified key doesn't exists</dd>
+  <dt>0</dt>
+  <dd>
+     specified key exists and it is a leaf key
+     <code>$_out</code> var contains a value of a specified key
+  </dd>
+  <dt>1</dt>
+  <dd>specified key exists, but it is not a leaf key</dd>
+</dl>
+</p>
+
+<p>
+<span class="cmdname">spec_cmp</span> command compares a specified
+cspec(<span class="var">CSPEC</span>) against another cspec
+or a cspec pattern(<span class="var">PATTERN</span>) and returns a list
+with mismatch entries.
+Mismatch entry is a list with 2 elements, where 1 item is a mismatch
+type and 2 item is full path to a key:
+<dl>
+  <dt><code>{M KEY_PATH}</code></dt>
+  <dd>
+    miss, <code>KEY_PATH</code> from pattern is missed from cspec
+  </dd>
+  <dt><code>{T KEY_PATH}</code></dt>
+  <dd>
+    wrong type, <code>KEY_PATH</code> from pattern is different type
+    than in cspec
+  </dd>
+  <dt><code>{E KEY_PATH}</code></dt>
+  <dd>
+    excess, <code>KEY_PATH</code> from cspec is missed from pattern
+  </dd>
+</dl>
+</p>
+
+<p>
+<span class="cmdname">spec_key_get</span> command tries to find a
+specified key(<span class="var">NAMES</span>) in a
+specified conf spec or conf spec pattern and returns its value.
+If a specified key isn't found,
+then <span class="cmdname">spec_key_get</span> returns "-";
+if a specified key is a section,
+then <span class="cmdname">spec_key_get</span> returns "sect".
+This command mostly useful as utility proc for assisting in making an
+error messages for user.
+</p>
+
+
+<h2>Conf syntax</h2>
+
+<p>
+Conf consists from key-value pairs,
+which can be grouped in sections.
+Whitespaces are ignored.
+Comment can be started by <code>#</code> symbols at almost any
+place(excluding <code>#</code> inside a quoted string) and lasts until
+the end of the line.
+Key, value and section name can consist of any chars exclude any space
+chars, <code>'='</code>, <code>'#'</code>, <code>'"'</code>,
+<code>'['</code>, <code>']'</code>, <code>'{'</code>, <code>'}'</code>,
+<code>'+'</code>, <code>'?'</code>.
+If a key, value or section name contains any of these characters,
+then the entire key,
+value or section name must be enclosed in double quotes.
+In this case, if double quotes appears inside the value,
+it must be escaped with a backslash(<code>\</code>).
+Value can be a string(quoted or not) or a list.
+A list is started with <code>'['</code> and is ended with <code>']'</code>.
+List elements are separated with spaces.
+</p>
+
+<h3>Assignment</h3>
+
+Assignment a string to a key:
+
+<pre>
+k1 = some_word
+k2 = "some string \"with\" spaces"
+</pre>
+
+Assignment a list to a key:
+
+<pre>
+k1 = [v1 v2 v3]
+k2 = [v1 "some string \"with\" spaces" v2]
+</pre>
+
+Assignment a string/list to a key only if this key isn't defined yet:
+
+<pre>
+k1 ?= some_word
+k2 ?= [v1 v2]
+</pre>
+
+Append a string/list to a key value(if previous value is a string, then
+it is converted to a list where the previous value becomes the only
+element):
+
+<pre>
+k1 = v1
+k1 += some_word
+k1 += [v2 v3]
+</pre>
+
+the same as:
+
+<pre>
+k1 = [v1 some_word v2 v3]
+</pre>
+
+<h3>File including</h3>
+
+Conf file can include another conf files with syntax:
+
+<pre>
+< FILENAME
+</pre>
+
+Where FILENAME is glob pattern.
+
+<h3>Sections</h3>
+
+A section can be defined in two ways. With [] syntax:
+
+<pre>
+[SECT_NAME]
+</pre>
+
+Or with {} syntax:
+
+<pre>
+SECT_NAME {
+}
+</pre>
+
+If a section is defined with <code>`[SECT_NAME]`</code> syntax,
+then current section prefix(top of a section prefixes stack) is replaced
+with <code>SECT_NAME</code>.
+If a section is defined with <code>`SECT_NAME {`</code> syntax,
+then <code>SECT_NAME</code> section prefix is pushed to a section prefixes
+stack and becomes a current section prefix until we reach
+corresponding "<code>}</code>",
+in which case <code>SECT_NAME</code> is poped from a section prefixes
+stack and previous value becomes a top of a stack
+and a current section prefix.
+In other words, []-sections is not stacked and is replaced by both
+[]-section and {}-section that come after it;
+{}-sections is stacked and both []-section and {}-section coming
+after is appended to it.
+E.g. if we call any of load proc with "-hd .",
+then this confs are equal:
+
+variant 1:
+
+<pre>
+sect1.sect2.key1 = val1
+sect1.sect2.key2 = val2
+sect1.sect2.sect3.key3 = val3
+sect1.sect2.key4 = val4
+</pre>
+
+variant 2:
+
+<pre>
+[sect1.sect2]
+key1 = val1
+key2 = val2
+sect3.key3 = val3
+key4 = val4
+</pre>
+
+variant 3:
+
+<pre>
+[sect1.sect2]
+key1 = val1
+key2 = val2
+[sect1.sect2.sect3]
+key3 = val3
+[sect1.sect2]
+key4 = val4
+</pre>
+
+variant 4:
+
+<pre>
+sect1.sect2 {
+	key1 = val1
+	key2 = val2
+	sect3 {
+		key3 = val3
+	}
+	key4 = val4
+}
+</pre>
+
+
+<h2>Conf syntax ABNF</h2>
+
+<pre>
+conf = *(key-value / section / include-stmt / WSP0)
+key-value = key ("=" / "+=" / "?=") (value / list)
+key = word / str
+value = word / str
+list = WSP0 "[" *((word / str / list) WSP) "]"
+section = ("[" (word / str) "]" *conf) /
+        ((word / str) "{" *conf "}")
+include-stmt = "<" WSP0 (word / str)
+word = WSP0 (%d33 / %d36-60 / %d62-90 / %d92 / %d94-122 / %d124 / %d126 - %d255) WSP0
+        ; all except any space (belong to [:space:] char class), =, #, ",
+        ; +, ?, [, ], {, }
+str = WSP0 DQUOTE %d01-%d255 DQUOTE WSP0
+        ; any chars in double quotes, where double quotes inside string
+        ; can be escaped with \ char
+WSP0 = *WSP
+WSP = SP / HTAB / CR / LF / CRLF / AND_ANY_UNICODE_WHITESPACE_CHAR
+</pre>
+
+<h2>Callback</h2>
+
+<p>
+If <span class="optname">-cb</span> option is specified for any of load
+proc, then a specified callback proc is called on every parsed key and
+value from a conf.
+Callback must accept the next parameters in order:
+<ul>
+  <li>ctx var name</li>
+  <li>conf var name</li>
+  <li>
+    operation (<code>=S</code>, <code>=L</code>, <code>+=S</code>,
+    <code>+=L</code>, <code>?=S</code> or <code>?=L</code>)
+  </li>
+  <li>var name with key full name(list with sect names and a key name)</li>
+  <li>value var name</li>
+</ul>
+</p>
+
+<p>
+Where operation is "<code>=S</code>" for assigning a string,
+"<code>=L</code>" for assigning a list,
+"<code>+=S</code>" for adding a string,
+"<code>+=L</code>" for adding a list,
+"<code>?=S</code>" for assigning a string if no such key yet,
+"<code>?=L</code>" for assigning a list if no such key yet.
+</p>
+
+<p>
+Callback can change a key name and/or a key value.
+In this case,
+new key and/or value will be saved in a parsed conf dict.
+</p>
+
+<p>
+Callback must ret value type(S or L) or "" if value shouldn't be
+saved(we don't want it or we already saved it ourselves in a callback).
+In the last case, a value type info also isn't saved(into cspec).
+</p>
+
+<h2>Conf specification</h2>
+
+<p>
+A configuration specification("conf spec" or "cspec" to be short) is
+a data structure with data types info for parsed keys/values.
+cspec is returned from load_* proc together with a parsed conf.
+cspec and parsed conf are dicts.
+cspec purpose is to checking values types and key existence(the single
+conf by itself is insufficient for this &ndash; see Rationale).
+cspec contains the same keys as a conf.
+But values can be only "S" or "L".
+Where "S" means a string value and "L" means a list value.
+Thus, if your cspec dict has "S" value for some key,
+then corresponding parsed conf dict has a string value for the same key.
+E.g. for this conf, parsed with "-hd .":
+</p>
+<pre>
+sect1.sect2 {
+	key1 = val1
+	key2 = val2
+	sect3 {
+		key3 = val3
+	}
+	key4 = val4
+}
+</pre>
+
+The parsed conf will be the dict:
+
+<pre>
+sect1 {sect2 {key1 val1 key2 val2 sect3 {key3 val3} key4 val4}}
+</pre>
+
+And the cspec will be the dict:
+
+<pre>
+sect1 {sect2 {key1 S key2 S sect3 {key3 S} key4 S}}
+</pre>
+
+To simplify a work with cspec several routines exists:
+<span class="cmdname">spec_key_existence</span>,
+<span class="cmdname">spec_cmp</span>,
+<span class="cmdname">spec_get_key</span>.
+
+
+<h2>Conf specification pattern</h2>
+
+<p>
+A configuration specification pattern("conf spec pattern" or
+"cspec pattern" to be short) is a data structure with data types info for
+parsed keys/values.
+When data type info can be actual data type or a data type pattern.
+cspec isn't returned from any proc &ndash; it's created by hands.
+cspec pattern purpose is to comparing cspec against it.
+This is simplify a procedure of checking values types and key existence
+after we parse a conf.
+<span class="cmdname">spec_cmp</span> proc is the main consumer of cspec
+pattern.
+The all syntax rules of cspec is also applies to cspec pattern with one
+additions: value can be not only "S" and "L", but also "A", "c", "C".
+Where:
+</p>
+<ul>
+  <li>A mean "S" or "L"</li>
+  <li>c mean any conf hierarchy</li>
+  <li>C mean any conf hierarchy or "S" or "L"</li>
+</ul>
+
+
+<h2>Rationale</h2>
+
+<p>
+Due to shimmering in tcl we can't reliably determine the type of a value in
+a parsed conf.
+For example, we expect the next conf:
+</p>
+
+<pre>
+n1 = VALUE
+</pre>
+
+But a user mistakenly(due to copy-pasting or something else) made n1 a
+section:
+
+<pre>
+n1 {
+  n2 = VALUE
+}
+</pre>
+
+After parsing with any of load proc we will have the next parsed conf:
+
+<pre>
+n1 {n2 VALUE}
+</pre>
+
+<p>
+Which from our perspective has key <code>n1</code> with value
+"<code>n2 VALUE</code>".
+If we do no acrobatics with <code>::tcl::unsupported::representation</code>
+(it is unsupported, isn't it :-)?),
+then we can't differentiate these 2 cases.
+Due to implicit type convertion(shimmering) we can simplify a situation
+with data types to "our values without data types".
+Thus, we have a some conf with data types(section vs string vs list) and
+we have a dict with a parsed conf where no data types info attached to
+values.
+Therefore, in order not to lose data type info,
+we should parse a conf into 2 data structures:
+one is a parsed conf(with keys and values),
+another is a struct with data types info for parsed keys/values.
+The last structure is called conf specification(or cspec for short) in
+this package.
+Thus, any load_* proc return a list with these 2 structures after work:
+a dict with a parsed conf and a dict with a conf spec.
+</p>
+
+<p>
+And workflow with some conf is like the next:
+</p>
+<ul>
+  <li>read a conf</li>
+  <li>compare a conf spec against a conf spec pattern</li>
+  <li>show some errors about mismatches</li>
+  <li>if no error, work with parsed conf as with usual dict</li>
+</ul>
+
+
+<h2>Examples</h2>
+
+<h3>Simple conf</h3>
+
+<pre>
+k1=v1
+k2="val
+with
+many
+lines"
+k3 =
+	"val with \" inside"
+k4 = [
+	[many values]
+	[inside list]
+	[for one key]]
+</pre>
+
+loaded with <code>`load_from_file my.conf`</code> give a conf:
+
+<pre>
+k1 v1 k2 {val
+with
+many
+lines} k3 {val with " inside} k4 {{many values} {inside list} {for one key}}
+</pre>
+
+<h3>Conf with sections</h3>
+
+<pre>
+k1 = v1
+[g1]
+k2 = v2
+[g2]
+k3 = v3
+</pre>
+
+loaded with <code>`load_from_file my.conf`</code> give a conf:
+
+<pre>
+k1 v1 g1 {k2 v2} g2 {k3 v3}
+</pre>
+
+<h3>Conf with nested sections</h3>
+
+<pre>
+k1 = v1
+g1 {
+  k2 = v2
+  g2 {
+    k3 = v3
+  }
+}
+</pre>
+
+loaded with <code>`load_from_file my.conf`</code> give a conf:
+
+<pre>
+k1 v1 g1 {k2 v2 g2 {k3 v3}}
+</pre>
+
+<h3>Conf with hierarchy delimiter specified</h3>
+
+<pre>
+g1.k1 = {1 2 3 {4 5}}
+g2.k2 = v2
+</pre>
+
+loaded with <code>`load_from_file -hd . my.conf`</code> give a conf:
+
+<pre>
+g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2}
+</pre>
+
+<h3>Conf monster</h3>
+
+<pre>
+g1.k1 = [1 2 3 [4 5]]
+[g2]
+k2 = v2
+k3.k4 = v3
+[g2.g3]
+k4 = v4
+g4.g5 {
+  k5.k6 = v6
+  [g7.g8]
+  k7.k8 = v7
+}
+</pre>
+
+loaded with <code>`load_from_file -hd . my.conf`</code> give a conf:
+
+<pre>
+g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2 k3 {k4 v3} g3 {k4 v4}} g4 {g5 {k5 {k6 v6} g7 {g8 {k7 {k8 v7}}}}}
+</pre>
+
+<h3>Conf with comments</h3>
+
+<pre>
+# here is some comments
+k = v
+k1 = v1 # another comments
+k2 = v2
+k3 = # this is k3
+        v3 # this is k3 value
+k4 = "v4 with # inside"
+# end of file
+</pre>
+
+loaded with <code>`load_from_file -hd . my.conf`</code> give a conf:
+
+<pre>
+k v k1 v1 k2 v2 k3 v3 k4 {v4 with # inside}
+</pre>
+
+See ex*.tcl for examples of code.
+
+<h2>Errors</h2>
+
+<dl>
+  <dt>
+<pre>
+conf error at m.conf:1: unexpected token sequence: "'k2'#6(L1) 'v2'#6(L1)". Want: KEY = VAL or KEY = [ or GROUP_NAME { or } or [GROUP_NAME]
+</pre>
+  </dt>
+  <dd>
+    There is parser error for token sequence started at line 1.
+    First token is 'k2' with token code 6 at line 1(L1),
+    second token is 'v2' with tokne code 6 at line 1. E.g.:
+
+<pre>
+k2 v2
+</pre>
+  </dd>
+  <dt>
+<pre>
+conf error at m.conf:1: Possible unclosed quotes at line 1. unexpected token sequence: "'k2'#6(L1) '='#1(L1)". Want: KEY = VAL or KEY = [ or GROUP_NAME { or } or [GROUP_NAME]
+</pre>
+  </dt>
+  <dd>
+	Double quotes is opened, but is not closed. E.g.:
+
+<pre>
+k2 = "v2
+</pre>
+  </dd>
+  <dt>
+<pre>
+missing value to go with key
+</pre>
+  </dt>
+  <dd>
+	If you call spec_cmp, then there is probably a misspelled key type.
+	E.g.:
+
+<pre>
+spec_cmp {k1 W} {k1 {k2 S}}
+</pre>
+
+    Or:
+
+<pre>
+spec_cmp {k1 {k2 S}} {k1 W}
+</pre>
+
+  </dd>
+</dl>
+</body>
+</html>
