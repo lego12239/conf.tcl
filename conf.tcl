@@ -247,29 +247,35 @@ proc _opts_parse {argslist spec} {
 proc _parse {_ctx conf} {
 	upvar $_ctx ctx
 	set err ""
-	set emsg ""
+	set err_from_lineno -1
+	set eprefix ""
 	if {[catch {__parse ctx $conf} conf]} {
 		if {[_toks_cnt ctx] > 0} {
 			set err_from_lineno [_toks_lineno ctx 0]
 		}
-		# file name and line numbers shouldn't be separated by space
-#		set emsg "[dict get $ctx src name]:${err_from_lineno}-[dict get $ctx src lineno_tok]"
-		set emsg "[dict get $ctx src name]:${err_from_lineno}"
-		set emsg "conf error at $emsg"
-		set err [list "${emsg}: $conf" "$emsg\n$::errorInfo" $::errorCode]
+		set err [list "$conf" "$::errorInfo" $::errorCode]
 	}
 	if {[dict get $ctx src buf] ne ""} {
-		set emsg [lindex $err 0]
 		if {[string index [dict get $ctx src buf] 0] eq {"}} {
-			lset err 0 "${emsg}. Possible unclosed quotes at line\
-			  [dict get $ctx src lineno_tok]"
+			set eprefix "Possible unclosed quotes at line\
+			  [dict get $ctx src lineno_tok]. "
 		} else {
-			lset err 0 "${emsg}. Token input buffer:\
-			  '[dict get $ctx src buf]'"
+			set eprefix "Token input buffer:\
+			  '[dict get $ctx src buf]'. "
 		}
 	}
 
 	if {$err ne ""} {
+		# file name and line numbers shouldn't be separated by space
+#		set eaddr "conf error at\
+#		  [dict get $ctx src name]:${err_from_lineno}-[dict get $ctx src lineno_tok]"
+		set eaddr "conf error at\
+		  [dict get $ctx src name]:${err_from_lineno}"
+		set emsg [lindex $err 0]
+		lset err 0 "${eaddr}: ${eprefix}$emsg"
+		set emsg [lindex $err 1]
+		lset err 1 "${eaddr}: ${eprefix}$emsg"
+
 		error {*}$err
 	}
 
@@ -322,7 +328,7 @@ proc __parse {_ctx conf} {
 			_parse_file_inclusion ctx conf $fmask
 #			puts "sect: [dict get $ctx sect]"
 		} else {
-			error "unexpected token sequence:\
+			error "Unexpected token sequence:\
 			  \"[_toks_dump ctx]\". Want:\
 			  KEY = VAL or KEY = \[ or GROUP_NAME \{ or \} or\
 			  \[GROUP_NAME\]" "" CONFERR
@@ -349,7 +355,7 @@ proc _parse_list {_ctx} {
 			_toks_drop ctx 1
 			break
 		} else {
-			error "unexpected token sequence:\
+			error "Unexpected token sequence:\
 			  \"[_toks_dump ctx]\".\
 			  Want: VAL or \[ or \]" "" CONFERR
 		}
