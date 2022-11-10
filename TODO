@@ -4,16 +4,14 @@
 - check ret val after while from _toks_get inside _parse. If it is equal to -1,
   then throw an error(may be after this we can remove a part of error related
   code from _load proc).
-- remove markdown from README.md. Convert it to plain text.
-- add syntax section to README(without ABNF).
 - add boolean support(yes/no, true/false, enable/disable without quotes).(Already
   exists?)
-- make -hd by default "."?
-- add callback for each kv?
-- add -path and -root for file path checking
-- add KEY < FILENAME for reading a value from a file
-- write a README.html
-- accept conf defaults with -conf opt?
-- add +=
-- add ?= ?
 - add .= ?
+- add conf_get.tcl utility for getting a value of a specified key(on command line).
+  It can be used from shell scripts, for example.
+- replace CONFERR in error calls with something like {CONF ...}?
+- ret -3 from spec_key_existence if unknown type (see autotests spec_cmp-4.0 and
+  spec_cmp-4.1). How can we test that value is single word without shimmering?
+- do not ret "sect" from spec_key_get for unknown type (see autotest spec-1.5).
+- add new err code(e.g. B - broken spec) for unknown type for _spec_cmp.
+  How can we test that value is single word without shimmering?
