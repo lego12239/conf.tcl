@@ -78,43 +78,43 @@ tcltest::test kv-3.0 {
 	simple key value pair with wrong chars(")
 } -body {
 	conf::load_from_str "k\"1  =  v1"
-} -returnCodes error -result "conf error at STR:1: unexpected token sequence: \"'k'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]. Possible unclosed quotes at line 1"
+} -returnCodes error -result "conf error at STR:1: Possible unclosed quotes at line 1. Unexpected token sequence: \"'k'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.1 {
 	simple key value pair with wrong chars([)
 } -body {
 	conf::load_from_str "k\[1  =  v1"
-} -returnCodes error -result "conf error at STR:1: unexpected token sequence: \"'k'#6(L1) '\['#4(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]. Token input buffer: '  =  v1'"
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) '\['#4(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.2 {
 	simple key value pair with wrong chars(])
 } -body {
 	conf::load_from_str "k\]1  =  v1"
-} -returnCodes error -result "conf error at STR:1: unexpected token sequence: \"'k'#6(L1) ']'#5(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]. Token input buffer: '  =  v1'"
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) ']'#5(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.3 "
 	simple key value pair with wrong chars({)
 " -body {
 	conf::load_from_str "k 1 \{  =  v1"
-} -returnCodes error -result "conf error at STR:1: unexpected token sequence: \"'k'#6(L1) '1'#6(L1) '{'#2(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]. Token input buffer: '  =  v1'"
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) '1'#6(L1) '{'#2(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.4 "
 	simple key value pair with wrong chars(})
 " -body {
 	conf::load_from_str "k\}1  =  v1"
-} -returnCodes error -result "conf error at STR:1: unexpected token sequence: \"'k'#6(L1) '}'#3(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]. Token input buffer: '  =  v1'"
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) '}'#3(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.5 {
 	simple key value pair with wrong chars( )
 } -body {
 	conf::load_from_str "k 1  =  v1"
-} -returnCodes error -result "conf error at STR:1: unexpected token sequence: \"'k'#6(L1) '1'#6(L1) '='#1(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]. Token input buffer: '  v1'"
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '  v1'. Unexpected token sequence: \"'k'#6(L1) '1'#6(L1) '='#1(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.6 {
 	simple key value pair with wrong chars(=)
 } -body {
 	conf::load_from_str "k=1  =  v1"
-} -returnCodes error -result "conf error at STR:1: unexpected token sequence: \"'='#1(L1) 'v1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+} -returnCodes error -result "conf error at STR:1: Unexpected token sequence: \"'='#1(L1) 'v1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-4.0 {
 	simple key value pair with quotes

@@ -6,7 +6,7 @@ tcltest::test err-1.0 {
 	multiline quoted val(missed quotes)
 } -body {
 	conf::load_from_str "k=\n\n\n\"v1"
-} -returnCodes error -result "conf error at STR:1: unexpected token sequence: \"'k'#6(L1) '='#1(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]. Possible unclosed quotes at line 4"
+} -returnCodes error -result "conf error at STR:1: Possible unclosed quotes at line 4. Unexpected token sequence: \"'k'#6(L1) '='#1(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test err-2.0.0 {
 	too many non parameter arguments
@@ -36,12 +36,12 @@ tcltest::test err-4.0 {
 	read conf from a file with err
 } -body {
 	conf::load_from_file -hd . test.err.conf
-} -returnCodes error -result "conf error at test.err.conf:8: unexpected token sequence: \"'k4'#6(L8) '='#1(L8) '}'#3(L9)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+} -returnCodes error -result "conf error at test.err.conf:8: Unexpected token sequence: \"'k4'#6(L8) '='#1(L8) '}'#3(L9)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test err-5.0 {
 	read conf from a file with err (included file)
 } -body {
 	conf::load_from_file -hd . test_incl.4.conf
-} -returnCodes error -result "conf error at test_incl.4.conf:4: conf error at ./test_incl.4.1.conf:5: conf error at ./test_incl.4.2.conf:3: unexpected token sequence: \"'k3'#6(L3) '='#1(L3) '}'#3(L4)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+} -returnCodes error -result "conf error at test_incl.4.conf:4: conf error at ./test_incl.4.1.conf:5: conf error at ./test_incl.4.2.conf:3: Unexpected token sequence: \"'k3'#6(L3) '='#1(L3) '}'#3(L4)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::cleanupTests
