@@ -1151,5 +1151,5 @@ proc _spec_cmp {pattern cspec {prefix ""}} {
 }
 }
 
-package provide conf 0.10
+package provide conf 1.0
 
