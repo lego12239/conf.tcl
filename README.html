@@ -867,23 +867,29 @@ k2 = "v2
   </dd>
   <dt>
 <pre>
-missing value to go with key
+Syntax error in cspec pattern for key 'k1': value is 'W'
 </pre>
   </dt>
   <dd>
-	If you call spec_cmp, then there is probably a misspelled key type.
+	If you call spec_cmp, then there is probably a misspelled key type in cspec pattern.
 	E.g.:
 
 <pre>
 spec_cmp {k1 W} {k1 {k2 S}}
 </pre>
-
-    Or:
+  </dd>
+  <dt>
+<pre>
+Syntax error in cspec for key 'k1': value is 'W'
+</pre>
+  </dt>
+  <dd>
+	If you call spec_cmp, then there is probably a misspelled key type in cspec.
+	E.g.:
 
 <pre>
 spec_cmp {k1 {k2 S}} {k1 W}
 </pre>
-
   </dd>
 </dl>
 </body>

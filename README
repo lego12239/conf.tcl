@@ -490,10 +490,17 @@ conf error at m.conf:1: Possible unclosed quotes at line 1. unexpected token seq
 
 	k2 = "v2
 
-missing value to go with key
+Syntax error in cspec pattern for key 'k1': value is 'W'
 
-	If you call spec_cmp, then there is probably a misspelled key type.
+	If you call spec_cmp, then there is probably a misspelled key type in cspec pattern.
 	E.g.:
 
     spec_cmp {k1 W} {k1 {k2 S}}
+
+Syntax error in cspec for key 'k1': value is 'W'
+
+	If you call spec_cmp, then there is probably a misspelled key type in cspec.
+	E.g.:
+
+    spec_cmp {k1 {k2 S}} {k1 W}
 
