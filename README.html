@@ -27,6 +27,38 @@
 <h2>Overview</h2>
 
 <p>
+conf package is pure-tcl package for loading a textual configuration data
+from file, channels and strings.
+It supports conf syntax with hierarchical and
+ini-style sections and key-value pairs where value can be string or list.
+The features are:
+</p>
+
+<ul>
+  <li>conf syntax: hierarchical sections support</li>
+  <li>conf syntax: ini-style sections support</li>
+  <li>conf syntax: comments support</li>
+  <li>conf syntax: file inclusion support</li>
+  <li>
+    callback can be used on every key-value assignment to change a
+    default behaviour
+  </li>
+  <li>
+    drastically(you can use a package only as a parser and process a parsed
+    key-value as you want even without a creation of resulting dict with a
+    parsed conf)
+  </li>
+  <li>
+    conf is parsed into 2 dicts: one is a parsed conf and another is a conf
+    specification with info about value types. This is very important for
+    working with parsed conf correctly. See Rationale section in the README.
+  </li>
+  <li>
+    there are utility routines to help with conf spec checking.
+  </li>
+</ul>
+
+<p>
 conf package contains 3 main routines for text configuration file loading:
 
 <ul>
@@ -67,7 +99,22 @@ And the next utility routines:
   </li>
 </ul>
 
-<h2>Synopsis</h2>
+<h2>Contents</h2>
+
+<ul>
+  <li><a href="#synopsis">Synopsis</a></li>
+  <li><a href="#description">Description</a></li>
+  <li><a href="#conf_syntax">Conf syntax</a></li>
+  <li><a href="#conf_syntax_abnf">Conf syntax ABNF</a></li>
+  <li><a href="#callback">Callback</a></li>
+  <li><a href="#conf_spec">Conf specification</a></li>
+  <li><a href="#conf_spec_pattern">Conf specification pattern</a></li>
+  <li><a href="#rationale">Rationale</a></li>
+  <li><a href="#ex">Examples</a></li>
+  <li><a href="#errors">Errors</a></li>
+</ul>
+
+<h2><a name="synopsis">Synopsis</a></h2>
 
 <div>
   <code>
@@ -168,7 +215,7 @@ And the next utility routines:
   </code>
 </div>
 
-<h2>Description</h2>
+<h2><a name="description">Description</a></h2>
 
 <p>
 <span class="cmdname">load_from_file</span> command parse a specified
@@ -334,7 +381,7 @@ error messages for user.
 </p>
 
 
-<h2>Conf syntax</h2>
+<h2><a name="conf_syntax">Conf syntax</a></h2>
 
 <p>
 Conf consists from key-value pairs,
@@ -483,7 +530,7 @@ sect1.sect2 {
 </pre>
 
 
-<h2>Conf syntax ABNF</h2>
+<h2><a name="conf_syntax_abnf">Conf syntax ABNF</a></h2>
 
 <pre>
 conf = *(key-value / section / include-stmt / WSP0)
@@ -504,7 +551,7 @@ WSP0 = *WSP
 WSP = SP / HTAB / CR / LF / CRLF / AND_ANY_UNICODE_WHITESPACE_CHAR
 </pre>
 
-<h2>Callback</h2>
+<h2><a name="callback">Callback</a></h2>
 
 <p>
 If <span class="optname">-cb</span> option is specified for any of load
@@ -544,7 +591,7 @@ saved(we don't want it or we already saved it ourselves in a callback).
 In the last case, a value type info also isn't saved(into cspec).
 </p>
 
-<h2>Conf specification</h2>
+<h2><a name="conf_spec">Conf specification</a></h2>
 
 <p>
 A configuration specification("conf spec" or "cspec" to be short) is
@@ -589,7 +636,7 @@ To simplify a work with cspec several routines exists:
 <span class="cmdname">spec_get_key</span>.
 
 
-<h2>Conf specification pattern</h2>
+<h2><a name="conf_spec_pattern">Conf specification pattern</a></h2>
 
 <p>
 A configuration specification pattern("conf spec pattern" or
@@ -607,13 +654,13 @@ additions: value can be not only "S" and "L", but also "A", "c", "C".
 Where:
 </p>
 <ul>
-  <li>A mean "S" or "L"</li>
-  <li>c mean any conf hierarchy</li>
-  <li>C mean any conf hierarchy or "S" or "L"</li>
+  <li>"A" mean "S" or "L"</li>
+  <li>"c" mean any conf hierarchy</li>
+  <li>"C" mean any conf hierarchy or "S" or "L"</li>
 </ul>
 
 
-<h2>Rationale</h2>
+<h2><a name="rationale">Rationale</a></h2>
 
 <p>
 Due to shimmering in tcl we can't reliably determine the type of a value in
@@ -672,7 +719,7 @@ And workflow with some conf is like the next:
 </ul>
 
 
-<h2>Examples</h2>
+<h2><a name="ex">Examples</a></h2>
 
 <h3>Simple conf</h3>
 
@@ -789,7 +836,7 @@ k v k1 v1 k2 v2 k3 v3 k4 {v4 with # inside}
 
 See ex*.tcl for examples of code.
 
-<h2>Errors</h2>
+<h2><a name="errors">Errors</a></h2>
 
 <dl>
   <dt>
