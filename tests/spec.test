@@ -42,7 +42,14 @@ tcltest::test spec-1.5 {
 } -body {
 	set cspec {k1 S k2 {k21 W}}
 	conf::spec_key_get $cspec {k2 k21}
-} -result {sect}
+} -returnCodes error -result "Syntax error in cspec for key 'k2 k21': value is 'W'"
+
+tcltest::test spec-1.6 {
+	spec_key_get, ""
+} -body {
+	set cspec {k1 S k2 {k21 ""}}
+	conf::spec_key_get $cspec {k2 k21}
+} -returnCodes error -result "Syntax error in cspec for key 'k2 k21': value is empty"
 
 tcltest::test spec-2.0 {
 	spec_key_get, -
