@@ -1,6 +1,23 @@
 Overview
 =======
 
+conf package is pure-tcl package for loading a textual configuration data from
+file, channels and strings. It supports conf syntax with hierarchical and
+ini-style sections and key-value pairs where value can be string or list.
+The features are:
+
+* conf syntax: hierarchical sections support
+* conf syntax: ini-style sections support
+* conf syntax: comments support
+* conf syntax: file inclusion support
+* callback can be used on every key-value assignment to change a default behaviour
+  drastically(you can use a package only as a parser and process a parsed
+  key-value as you want even without a creation of resulting dict with a parsed conf)
+* conf is parsed into 2 dicts: one is a parsed conf and another is a conf
+  specification with info about value types. This is very important for working
+  with parsed conf correctly. See Rationale section in the README.
+* there are utility routines to help with conf spec checking.
+
 conf package contains 3 main routines for text configuration file loading:
 * conf::load_from_file - to load a conf from a file
 * conf::load_from_fh - to load a conf from an open file handler
@@ -309,9 +326,9 @@ we parse a conf. spec_cmp proc is the main consumer of cspec pattern. The
 all syntax rules of cspec is also applies to cspec pattern with one
 additions: value can be not only "S" and "L", but also "A", "c", "C".
 Where:
-- A mean "S" or "L"
-- c mean any conf hierarchy
-- C mean any conf hierarchy or "S" or "L"
+- "A" mean "S" or "L"
+- "c" mean any conf hierarchy
+- "C" mean any conf hierarchy or "S" or "L"
 
 
 Rationale
