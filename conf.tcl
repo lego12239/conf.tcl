@@ -1071,6 +1071,14 @@ proc spec_key_existence {cspec names {_out ""}} {
 			}
 		} else {
 			if {![string match {[SLAcC]} $v]} {
+				if {[catch {dict size $v} ret]} {
+					error "Syntax error in cspec for key\
+					  '[lrange $names 0 $i]': value is '$v'"
+				}
+				if {$ret == 0} {
+					error "Syntax error in cspec for key\
+					  '[lrange $names 0 $i]': value is empty"
+				}
 				return 1
 			}
 		}
