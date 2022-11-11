@@ -1107,6 +1107,22 @@ proc spec_cmp {pattern cspec} {
 proc _spec_cmp {pattern cspec {prefix ""}} {
 	set res [list]
 
+	if {[catch {dict size $pattern} ret]} {
+		error "Syntax error in cspec pattern for key '$prefix': value is\
+		  '$pattern'"
+	}
+	if {$ret == 0} {
+		error "Syntax error in cspec pattern for key '$prefix': value is\
+		  empty"
+	}
+
+	if {[catch {dict size $cspec} ret]} {
+		error "Syntax error in cspec for key '$prefix': value is '$cspec'"
+	}
+	if {$ret == 0} {
+		error "Syntax error in cspec for key '$prefix': value is empty"
+	}
+
 #	puts "ENTER: $prefix"
 	dict for {k vpat} $pattern {
 #		puts "$k: $vpat"
