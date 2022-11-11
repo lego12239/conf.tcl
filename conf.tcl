@@ -53,7 +53,7 @@ proc load_from_file {args} {
 	if {$idx >= [llength $args]} {
 		error "File name must be specified"
 	}
-	if {[expr {$idx + 1}] != [llength $args]} {
+	if {($idx + 1) != [llength $args]} {
 		error "Too many files are specified"
 	}
 	set fh [open [lindex $args $idx]]
@@ -117,7 +117,7 @@ proc load_from_fh {args} {
 	if {$idx >= [llength $args]} {
 		error "Chan must be specified"
 	}
-	if {[expr {$idx + 1}] != [llength $args]} {
+	if {($idx + 1) != [llength $args]} {
 		error "Too many chans are specified"
 	}
 	set src [dict create\
@@ -177,7 +177,7 @@ proc load_from_str {args} {
 	if {$idx >= [llength $args]} {
 		error "String must be specified"
 	}
-	if {[expr {$idx + 1}] != [llength $args]} {
+	if {($idx + 1) != [llength $args]} {
 		error "Too many strings are specified"
 	}
 	set src [dict create\
