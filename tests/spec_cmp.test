@@ -128,7 +128,7 @@ tcltest::test spec_cmp-4.0 {
 	set ref {k1 {k11 W} k2 L}
 	set cspec {k1 {k11 {k111 L k112 S}} k2 {k21 {k211 S}}}
 	conf::spec_cmp $ref $cspec
-} -returnCodes error -result "missing value to go with key"
+} -returnCodes error -result "Syntax error in cspec pattern for key 'k1 k11': value is 'W'"
 
 tcltest::test spec_cmp-4.1 {
 	unknown value type
@@ -136,6 +136,22 @@ tcltest::test spec_cmp-4.1 {
 	set ref {k1 {k11 {k111 L k112 S}} k2 {k21 {k211 S}}}
 	set cspec {k1 {k11 W} k2 L}
 	conf::spec_cmp $ref $cspec
-} -returnCodes error -result "missing value to go with key"
+} -returnCodes error -result "Syntax error in cspec for key 'k1 k11': value is 'W'"
+
+tcltest::test spec_cmp-4.2 {
+	unknown value type
+} -body {
+	set ref {k1 {k11 ""} k2 L}
+	set cspec {k1 {k11 {k111 L k112 S}} k2 {k21 {k211 S}}}
+	conf::spec_cmp $ref $cspec
+} -returnCodes error -result "Syntax error in cspec pattern for key 'k1 k11': value is empty"
+
+tcltest::test spec_cmp-4.3 {
+	unknown value type
+} -body {
+	set ref {k1 {k11 {k111 L k112 S}} k2 {k21 {k211 S}}}
+	set cspec {k1 {k11 ""} k2 L}
+	conf::spec_cmp $ref $cspec
+} -returnCodes error -result "Syntax error in cspec for key 'k1 k11': value is empty"
 
 tcltest::cleanupTests
