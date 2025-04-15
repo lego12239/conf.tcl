@@ -170,7 +170,7 @@ Conf file can include another conf files with syntax:
 
 < FILENAME
 
-Where FILENAME is glob pattern.
+Where FILENAME is glob pattern. Files are parsed in alphabetical order.
 
 Sections
 --------
