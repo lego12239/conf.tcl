@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022 Oleg Nemanov <lego12239@yandex.ru>
+# Copyright (c) 2020-2025 Oleg Nemanov <lego12239@yandex.ru>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -1175,5 +1175,5 @@ proc _spec_cmp {pattern cspec {prefix ""}} {
 }
 }
 
-package provide conf 1.0
+package provide conf 1.1
 
