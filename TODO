@@ -7,6 +7,9 @@
 - add boolean support(yes/no, true/false, enable/disable without quotes).(Already
   exists?)
 - add .= ?
+- add ?.= or .?= ?
 - add conf_get.tcl utility for getting a value of a specified key(on command line).
   It can be used from shell scripts, for example.
 - replace CONFERR in error calls with something like {CONF ...}?
+- add multiline value support?
+- autotests for += without previous =
