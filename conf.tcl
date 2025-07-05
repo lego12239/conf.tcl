@@ -289,33 +289,33 @@ proc __parse {_ctx conf} {
 
 	while {[_toks_get ctx 3] > 0} {
 		if {[_toks_match ctx "6 1 6 "]} {
-			_conf_kv_set_str ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
+			_conf_kv_set_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 9 6 "]} {
-			_conf_kv_append_str ctx conf [_toks_str ctx 0] [_toks_str ctx 2]
+			_conf_kv_append_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 10 6 "]} {
-			_conf_kv_set_str_if_not_exist ctx conf [_toks_str ctx 0]\
-			  [_toks_str ctx 2]
+			_conf_kv_set_str_if_not_exist ctx conf [_toks_data ctx 0]\
+			  [_toks_data ctx 2]
 			_toks_drop ctx 3
 		} elseif {[_toks_match ctx "6 1 4 "]} {
-			set name [_toks_str ctx 0]
+			set name [_toks_data ctx 0]
 			_toks_drop ctx 3
 			_conf_kv_set_list ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "6 9 4 "]} {
-			set name [_toks_str ctx 0]
+			set name [_toks_data ctx 0]
 			_toks_drop ctx 3
 			_conf_kv_append_list ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "6 10 4 "]} {
-			set name [_toks_str ctx 0]
+			set name [_toks_data ctx 0]
 			_toks_drop ctx 3
 			_conf_kv_set_list_if_not_exist ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "4 6 5 "]} {
-			_sect_push ctx 0 [_toks_str ctx 1]
+			_sect_push ctx 0 [_toks_data ctx 1]
 			_toks_drop ctx 3
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "6 2 "]} {
-			_sect_push ctx 1 [_toks_str ctx 0]
+			_sect_push ctx 1 [_toks_data ctx 0]
 			_toks_drop ctx 2
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "3 "]} {
@@ -323,7 +323,7 @@ proc __parse {_ctx conf} {
 			_toks_drop ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "8 6 "]} {
-			set fmask [_toks_str ctx 1]
+			set fmask [_toks_data ctx 1]
 			_toks_drop ctx 2
 			_parse_file_inclusion ctx conf $fmask
 #			puts "sect: [dict get $ctx sect]"
@@ -346,7 +346,7 @@ proc _parse_list {_ctx} {
 
 	while {[_toks_get ctx 1] > 0} {
 		if {[_toks_match ctx "6 "]} {
-			lappend list [_toks_str ctx 0]
+			lappend list [_toks_data ctx 0]
 			_toks_drop ctx 1
 		} elseif {[_toks_match ctx "4 "]} {
 			_toks_drop ctx 1
@@ -736,8 +736,8 @@ proc _toks_get {_ctx cnt} {
 	# Read tokens
 	while {($len < $cnt) && ([set tok [_get_tok ctx]] >= 0)} {
 		# Debug output
-#		puts "$tok: '[dict get $ctx src tok_str]'"
-		lappend toks [_tok_mk $tok [dict get $ctx src tok_str]\
+#		puts "$tok: '[dict get $ctx src tok_data]'"
+		lappend toks [_tok_mk $tok [dict get $ctx src tok_data]\
 		  [dict get $ctx src lineno_tok]]
 		incr len
 	}
@@ -746,8 +746,8 @@ proc _toks_get {_ctx cnt} {
 	return $len
 }
 
-proc _tok_mk {code str lineno} {
-	return [list $code $str $lineno]
+proc _tok_mk {code data lineno} {
+	return [list $code $data $lineno]
 }
 
 proc _toks_add {_ctx toks} {
@@ -781,7 +781,7 @@ proc _toks_match {_ctx str} {
 	  [dict get $ctx src toks_css] $str]
 }
 
-proc _toks_str {_ctx idx} {
+proc _toks_data {_ctx idx} {
 	upvar $_ctx ctx
 
 	return [lindex [dict get $ctx src toks] $idx 1]
@@ -889,7 +889,7 @@ proc _get_tok {_ctx} {
 	} else {
 		set str [lindex $mstr 0]
 	}
-	dict set ctx src tok_str $str
+	dict set ctx src tok_data $str
 	return $tok
 }
 
