@@ -443,7 +443,7 @@ proc _ctx_mk {{prms ""}} {
 #     buf - input buffer(lines read from a source)
 #   for parser:
 #     toks - input tokens buffer(tokens read, but not yet removed)
-#     toks_toks - a cache for _toks_match(tokens numbers in one string)
+#     toks_css - a cache for _toks_match(tokens codes in one string)
 proc _ctx_src_push {_ctx src} {
 	upvar $_ctx ctx
 	set src_def [dict create\
@@ -453,7 +453,7 @@ proc _ctx_src_push {_ctx src} {
 	  lineno_tok 0\
 	  buf ""\
 	  toks ""\
-	  toks_toks ""]
+	  toks_css ""]
 
 	dict lappend ctx srcs [dict get $ctx src]
 	set src [dict merge $src_def $src]
@@ -763,7 +763,7 @@ proc _toks_add {_ctx toks} {
 	for {set i 0} {$i < $len} {incr i} {
 		set str "$str[lindex $toks0 $i 0] "
 	}
-	dict set ctx src toks_toks $str
+	dict set ctx src toks_css $str
 }
 
 proc _toks_drop {_ctx cnt} {
@@ -778,7 +778,7 @@ proc _toks_match {_ctx str} {
 	set len [string length $str]
 
 	return [string equal -length [string length $str]\
-	  [dict get $ctx src toks_toks] $str]
+	  [dict get $ctx src toks_css] $str]
 }
 
 proc _toks_str {_ctx idx} {
