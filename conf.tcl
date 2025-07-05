@@ -731,8 +731,8 @@ proc _mk_name {_ctx str} {
 proc _toks_get {_ctx cnt} {
 	upvar $_ctx ctx
 
-	set toks [dict get $ctx src toks]
-	set len [llength $toks]
+	set toks ""
+	set len [llength [dict get $ctx src toks]]
 	# Read tokens
 	while {($len < $cnt) && ([set tok [_get_tok ctx]] >= 0)} {
 		# Debug output
@@ -741,20 +741,29 @@ proc _toks_get {_ctx cnt} {
 		  [dict get $ctx src lineno_tok]]
 		incr len
 	}
-	dict set ctx src toks $toks
-
-	# Make a string from a tokens numbers sequence
-	set str ""
-	for {set i 0} {$i < $len} {incr i} {
-		set str "$str[lindex [dict get $ctx src toks] $i 0] "
-	}
-	dict set ctx src toks_toks $str
+	_toks_add ctx $toks
 
 	return $len
 }
 
 proc _tok_mk {code str lineno} {
 	return [list $code $str $lineno]
+}
+
+proc _toks_add {_ctx toks} {
+	upvar $_ctx ctx
+
+	set toks0 [dict get $ctx src toks]
+	lappend toks0 {*}$toks
+	dict set ctx src toks $toks0
+
+	# Rebuild tokens codes sequence string.
+	set str ""
+	set len [llength $toks0]
+	for {set i 0} {$i < $len} {incr i} {
+		set str "$str[lindex $toks0 $i 0] "
+	}
+	dict set ctx src toks_toks $str
 }
 
 proc _toks_drop {_ctx cnt} {
