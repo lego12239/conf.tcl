@@ -817,7 +817,7 @@ proc _get_tok {_ctx} {
 	dict set ctx src lineno_tok [dict get $ctx src lineno]
 	while {$tok < 0} {
 		switch -regexp -matchvar mstr [dict get $ctx src buf] {
-			{^\s+} {
+			{^[ \t\r\n]+} {
 				_biteoff_buf ctx [string length [lindex $mstr 0]]
 			}
 			{^\+=} {
@@ -847,7 +847,7 @@ proc _get_tok {_ctx} {
 			{^\]} {
 				set tok 5
 			}
-			{^[^\]\[[:space:]=#"{}+?]+} {
+			{^[^\]\[ \t\r\n=#"{}+?]+} {
 				set tok 6
 			}
 			{^"([^"\\]+|\\.|)+"} {
