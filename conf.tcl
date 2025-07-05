@@ -737,7 +737,7 @@ proc _toks_get {_ctx cnt} {
 	while {($len < $cnt) && ([set tok [_get_tok ctx]] >= 0)} {
 		# Debug output
 #		puts "$tok: '[dict get $ctx src tok_str]'"
-		lappend toks [list $tok [dict get $ctx src tok_str]\
+		lappend toks [_tok_mk $tok [dict get $ctx src tok_str]\
 		  [dict get $ctx src lineno_tok]]
 		incr len
 	}
@@ -751,6 +751,10 @@ proc _toks_get {_ctx cnt} {
 	dict set ctx src toks_toks $str
 
 	return $len
+}
+
+proc _tok_mk {code str lineno} {
+	return [list $code $str $lineno]
 }
 
 proc _toks_drop {_ctx cnt} {
