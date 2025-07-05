@@ -1175,5 +1175,5 @@ proc _spec_cmp {pattern cspec {prefix ""}} {
 }
 }
 
-package provide conf 1.1
+package provide conf 0a20250705
 
