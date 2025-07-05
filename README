@@ -247,7 +247,7 @@ include-stmt = "<" WSP0 (word / str)
 word = WSP0 (%d33 / %d36-60 / %d62-90 / %d92 / %d94-122 / %d124 / %d126 - %d255) WSP0
         ; all except WSP, =, #, ",
         ; +, ?, [, ], {, }
-str = WSP0 DQUOTE %d01-%d255 DQUOTE WSP0
+str = WSP0 DQUOTE (%d01-d91 / %93-d255 / %d92 %d92 / %d92 DQUOTE) DQUOTE WSP0
         ; any chars in double quotes, where double quotes inside string
         ; can be escaped with \ char
 WSP0 = *WSP
