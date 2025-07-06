@@ -287,7 +287,7 @@ proc __parse {_ctx conf} {
 	# cache a sect value
 	set sect [lindex [dict get $ctx sect] end]
 
-	while {[_toks_get ctx 3] > 0} {
+	while {[_toks_read ctx 3] > 0} {
 		if {[_toks_match ctx "6 1 6 "]} {
 			_conf_kv_set_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
@@ -344,7 +344,7 @@ proc _parse_list {_ctx} {
 	# cache a sect value
 	set sect [lindex [dict get $ctx sect] end]
 
-	while {[_toks_get ctx 1] > 0} {
+	while {[_toks_read ctx 1] > 0} {
 		if {[_toks_match ctx "6 "]} {
 			lappend list [_toks_data ctx 0]
 			_toks_rm_head ctx 1
@@ -731,7 +731,7 @@ proc _mk_name {_ctx str} {
 ######################################################################
 # TOKENS ROUTINES
 ######################################################################
-proc _toks_get {_ctx cnt} {
+proc _toks_read {_ctx cnt} {
 	upvar $_ctx ctx
 
 	set toks ""
