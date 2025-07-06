@@ -744,7 +744,7 @@ proc _toks_get {_ctx cnt} {
 		  [dict get $ctx src lineno_tok]]
 		incr len
 	}
-	_toks_add ctx $toks
+	_toks_add_tail ctx $toks
 
 	return $len
 }
@@ -753,7 +753,7 @@ proc _tok_mk {code data lineno} {
 	return [list $code $data $lineno]
 }
 
-proc _toks_add {_ctx toks} {
+proc _toks_add_tail {_ctx toks} {
 	upvar $_ctx ctx
 
 	set toks0 [dict get $ctx src toks]
