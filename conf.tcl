@@ -510,6 +510,9 @@ proc _ctx_src_pop {_ctx} {
 	dict set ctx srcs [lrange [dict get $ctx srcs] 0 end-1]
 }
 
+######################################################################
+# SECTIONS ROUTINES
+######################################################################
 # Add a sect with specified name and type to a sects stack.
 # prms:
 #  _ctx - ctx var name
