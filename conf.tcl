@@ -759,13 +759,13 @@ proc _exptbl_compile {tbl} {
 				dict set res $key "."
 			} else {
 				if {[dict get $res $key] ne "."} {
-					error "try to overwrite '$key' exp with '.' value (existent value is '[dict get $res $key]')"
+					error "trying to overwrite '$key' exp with '.' value (existent value is '[dict get $res $key]')"
 				}
 			}
 		}
 		append key "[lindex $exp $i] "
 		if {[dict exists $res $key]} {
-			error "try to overwrite '$key' exp with '[lindex $entry 1]' value (existent value is '[dict get $res $key]')"
+			error "trying to overwrite '$key' exp with '[lindex $entry 1]' value (existent value is '[dict get $res $key]')"
 		}
 		dict set res $key [lindex $entry 1]
 	}
