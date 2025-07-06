@@ -760,13 +760,7 @@ proc _toks_add_tail {_ctx toks} {
 	lappend toks0 {*}$toks
 	dict set ctx src toks $toks0
 
-	# Rebuild tokens codes sequence string.
-	set str ""
-	set len [llength $toks0]
-	for {set i 0} {$i < $len} {incr i} {
-		set str "$str[lindex $toks0 $i 0] "
-	}
-	dict set ctx src toks_css $str
+	_toks_rebuild_css ctx
 }
 
 proc _toks_rm_head {_ctx cnt} {
@@ -774,6 +768,19 @@ proc _toks_rm_head {_ctx cnt} {
 
 	incr cnt -1
 	dict set ctx src toks [lreplace [dict get $ctx src toks] 0 $cnt]
+}
+
+proc _toks_rebuild_css {_ctx} {
+	upvar $_ctx ctx
+	set toks [dict get $ctx src toks]
+
+	# Rebuild tokens codes sequence string.
+	set str ""
+	set len [llength $toks]
+	for {set i 0} {$i < $len} {incr i} {
+		set str "$str[lindex $toks $i 0] "
+	}
+	dict set ctx src toks_css $str
 }
 
 proc _toks_match {_ctx str} {
