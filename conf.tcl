@@ -286,52 +286,80 @@ proc __parse {_ctx conf} {
 	upvar $_ctx ctx
 	# cache a sect value
 	set sect [lindex [dict get $ctx sect] end]
+	set exptbl [list \
+	  {"6 1 6" "=S"} \
+	  {"6 9 6" "+=S"} \
+	  {"6 10 6" "?=S"} \
+	  {"6 1 4" "=L"} \
+	  {"6 9 4" "+=L"} \
+	  {"6 10 4" "?=L"} \
+	  {"4 6 5" "SECT"} \
+	  {"6 2" SECT_PUSH} \
+	  {"3" SECT_POP} \
+	  {"8 6" F}]
+	set exptbl [_exptbl_compile $exptbl]
 
-	while {[_toks_read ctx 3] > 0} {
-		if {[_toks_head_is_match ctx "6 1 6 "]} {
+	while {[_toks_read ctx] > 0} {
+		set expname [_exptbl_get_match $exptbl [dict get $ctx src toks_css]]
+#		puts "DBG __parse: expname=$expname"
+		switch $expname {
+		"=S" {
 			_conf_kv_set_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
-		} elseif {[_toks_head_is_match ctx "6 9 6 "]} {
+		}
+		"+=S" {
 			_conf_kv_append_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
-		} elseif {[_toks_head_is_match ctx "6 10 6 "]} {
+		}
+		"?=S" {
 			_conf_kv_set_str_if_not_exist ctx conf [_toks_data ctx 0]\
 			  [_toks_data ctx 2]
 			_toks_rm_head ctx 3
-		} elseif {[_toks_head_is_match ctx "6 1 4 "]} {
+		}
+		"=L" {
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
 			_conf_kv_set_list ctx conf $name [_parse_list ctx]
-		} elseif {[_toks_head_is_match ctx "6 9 4 "]} {
+		}
+		"+=L" {
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
 			_conf_kv_append_list ctx conf $name [_parse_list ctx]
-		} elseif {[_toks_head_is_match ctx "6 10 4 "]} {
+		}
+		"?=L" {
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
 			_conf_kv_set_list_if_not_exist ctx conf $name [_parse_list ctx]
-		} elseif {[_toks_head_is_match ctx "4 6 5 "]} {
+		}
+		SECT {
 			_sect_push ctx 0 [_toks_data ctx 1]
 			_toks_rm_head ctx 3
 #			puts "sect: [dict get $ctx sect]"
-		} elseif {[_toks_head_is_match ctx "6 2 "]} {
+		}
+		SECT_PUSH {
 			_sect_push ctx 1 [_toks_data ctx 0]
 			_toks_rm_head ctx 2
 #			puts "sect: [dict get $ctx sect]"
-		} elseif {[_toks_head_is_match ctx "3 "]} {
+		}
+		SECT_POP {
 			_sect_pop ctx 1
 			_toks_rm_head ctx 1
 #			puts "sect: [dict get $ctx sect]"
-		} elseif {[_toks_head_is_match ctx "8 6 "]} {
+		}
+		F {
 			set fmask [_toks_data ctx 1]
 			_toks_rm_head ctx 2
 			_parse_file_inclusion ctx conf $fmask
 #			puts "sect: [dict get $ctx sect]"
-		} else {
+		}
+		. {
+		}
+		default {
 			error "Unexpected token sequence:\
 			  \"[_toks_dump ctx]\". Want:\
 			  KEY = VAL or KEY = \[ or GROUP_NAME \{ or \} or\
 			  \[GROUP_NAME\]" "" CONFERR
+		}
 		}
 	}
 
@@ -343,21 +371,35 @@ proc _parse_list {_ctx} {
 	set list [list]
 	# cache a sect value
 	set sect [lindex [dict get $ctx sect] end]
+	set exptbl [list \
+	  {"6" S} \
+	  {"4" Ls} \
+	  {"5" Le}]
+	set exptbl [_exptbl_compile $exptbl]
 
-	while {[_toks_read ctx 1] > 0} {
-		if {[_toks_head_is_match ctx "6 "]} {
+	while {[_toks_read ctx] > 0} {
+		set expname [_exptbl_get_match $exptbl [dict get $ctx src toks_css]]
+#		puts "DBG _parse_list: expname=$expname"
+		switch $expname {
+		"S" {
 			lappend list [_toks_data ctx 0]
 			_toks_rm_head ctx 1
-		} elseif {[_toks_head_is_match ctx "4 "]} {
+		}
+		"Ls" {
 			_toks_rm_head ctx 1
 			lappend list [_parse_list ctx]
-		} elseif {[_toks_head_is_match ctx "5 "]} {
+		}
+		"Le" {
 			_toks_rm_head ctx 1
 			break
-		} else {
+		}
+		"." {
+		}
+		default {
 			error "Unexpected token sequence:\
 			  \"[_toks_dump ctx]\".\
 			  Want: VAL or \[ or \]" "" CONFERR
+		}
 		}
 	}
 
@@ -704,6 +746,48 @@ proc _conf_kv_append {_ctx _conf name vlist op} {
 	spec_key_set {ctx cspec} $names "L"
 }
 
+proc _exptbl_compile {tbl} {
+	set res [dict create]
+
+	foreach entry $tbl {
+		set key {}
+		set exp [lindex $entry 0]
+		set len [llength $exp]
+		for {set i 0} {$i < ($len - 1)} {incr i} {
+			append key "[lindex $exp $i] "
+			if {![dict exists $res $key]} {
+				dict set res $key "."
+			} else {
+				if {[dict get $res $key] ne "."} {
+					error "try to overwrite '$key' exp with '.' value (existent value is '[dict get $res $key]')"
+				}
+			}
+		}
+		append key "[lindex $exp $i] "
+		if {[dict exists $res $key]} {
+			error "try to overwrite '$key' exp with '[lindex $entry 1]' value (existent value is '[dict get $res $key]')"
+		}
+		dict set res $key [lindex $entry 1]
+	}
+
+	return $res
+}
+
+proc _exptbl_get_match {exptbl toks_css} {
+	set len [llength $toks_css]
+	set key ""
+	set exp ""
+	for {set i 0} {$i < $len} {incr i} {
+		append key "[lindex $toks_css $i 0] "
+		if {![dict exists $exptbl $key]} {
+			break
+		}
+		set exp [dict get $exptbl $key]
+	}
+
+	return $exp
+}
+
 # Get list of names from supplied str by splitting it on hd char sequence.
 # If hd is empty string, then use supplied str as is.
 # E.g.(ctx with hd set to "->"):
@@ -731,22 +815,19 @@ proc _mk_name {_ctx str} {
 ######################################################################
 # TOKENS ROUTINES
 ######################################################################
-proc _toks_read {_ctx cnt} {
+proc _toks_read {_ctx} {
 	upvar $_ctx ctx
 
 	set toks ""
-	set len [llength [dict get $ctx src toks]]
-	# Read tokens
-	while {($len < $cnt) && ([set tok [_get_tok ctx]] >= 0)} {
+	# Read token
+	if {[set tok [_get_tok ctx]] >= 0} {
 		# Debug output
 #		puts "$tok: '[dict get $ctx src tok_data]'"
-		lappend toks [_tok_mk $tok [dict get $ctx src tok_data]\
-		  [dict get $ctx src lineno_tok]]
-		incr len
+		_toks_add_tail ctx [list [_tok_mk $tok [dict get $ctx src tok_data]\
+		  [dict get $ctx src lineno_tok]]]
 	}
-	_toks_add_tail ctx $toks
 
-	return $len
+	return [llength [dict get $ctx src toks]]
 }
 
 proc _tok_mk {code data lineno} {
@@ -777,12 +858,12 @@ proc _toks_rebuild_css {_ctx} {
 	set toks [dict get $ctx src toks]
 
 	# Rebuild tokens codes sequence string.
-	set str ""
+	set css ""
 	set len [llength $toks]
 	for {set i 0} {$i < $len} {incr i} {
-		set str "$str[lindex $toks $i 0] "
+		lappend css [lindex $toks $i 0]
 	}
-	dict set ctx src toks_css $str
+	dict set ctx src toks_css $css
 }
 
 proc _toks_head_is_match {_ctx str} {
