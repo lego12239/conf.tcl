@@ -290,41 +290,41 @@ proc __parse {_ctx conf} {
 	while {[_toks_get ctx 3] > 0} {
 		if {[_toks_match ctx "6 1 6 "]} {
 			_conf_kv_set_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
-			_toks_drop ctx 3
+			_toks_rm_head ctx 3
 		} elseif {[_toks_match ctx "6 9 6 "]} {
 			_conf_kv_append_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
-			_toks_drop ctx 3
+			_toks_rm_head ctx 3
 		} elseif {[_toks_match ctx "6 10 6 "]} {
 			_conf_kv_set_str_if_not_exist ctx conf [_toks_data ctx 0]\
 			  [_toks_data ctx 2]
-			_toks_drop ctx 3
+			_toks_rm_head ctx 3
 		} elseif {[_toks_match ctx "6 1 4 "]} {
 			set name [_toks_data ctx 0]
-			_toks_drop ctx 3
+			_toks_rm_head ctx 3
 			_conf_kv_set_list ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "6 9 4 "]} {
 			set name [_toks_data ctx 0]
-			_toks_drop ctx 3
+			_toks_rm_head ctx 3
 			_conf_kv_append_list ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "6 10 4 "]} {
 			set name [_toks_data ctx 0]
-			_toks_drop ctx 3
+			_toks_rm_head ctx 3
 			_conf_kv_set_list_if_not_exist ctx conf $name [_parse_list ctx]
 		} elseif {[_toks_match ctx "4 6 5 "]} {
 			_sect_push ctx 0 [_toks_data ctx 1]
-			_toks_drop ctx 3
+			_toks_rm_head ctx 3
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "6 2 "]} {
 			_sect_push ctx 1 [_toks_data ctx 0]
-			_toks_drop ctx 2
+			_toks_rm_head ctx 2
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "3 "]} {
 			_sect_pop ctx 1
-			_toks_drop ctx 1
+			_toks_rm_head ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		} elseif {[_toks_match ctx "8 6 "]} {
 			set fmask [_toks_data ctx 1]
-			_toks_drop ctx 2
+			_toks_rm_head ctx 2
 			_parse_file_inclusion ctx conf $fmask
 #			puts "sect: [dict get $ctx sect]"
 		} else {
@@ -347,12 +347,12 @@ proc _parse_list {_ctx} {
 	while {[_toks_get ctx 1] > 0} {
 		if {[_toks_match ctx "6 "]} {
 			lappend list [_toks_data ctx 0]
-			_toks_drop ctx 1
+			_toks_rm_head ctx 1
 		} elseif {[_toks_match ctx "4 "]} {
-			_toks_drop ctx 1
+			_toks_rm_head ctx 1
 			lappend list [_parse_list ctx]
 		} elseif {[_toks_match ctx "5 "]} {
-			_toks_drop ctx 1
+			_toks_rm_head ctx 1
 			break
 		} else {
 			error "Unexpected token sequence:\
@@ -769,7 +769,7 @@ proc _toks_add_tail {_ctx toks} {
 	dict set ctx src toks_css $str
 }
 
-proc _toks_drop {_ctx cnt} {
+proc _toks_rm_head {_ctx cnt} {
 	upvar $_ctx ctx
 
 	incr cnt -1
