@@ -768,6 +768,8 @@ proc _toks_rm_head {_ctx cnt} {
 
 	incr cnt -1
 	dict set ctx src toks [lreplace [dict get $ctx src toks] 0 $cnt]
+
+	_toks_rebuild_css ctx
 }
 
 proc _toks_rebuild_css {_ctx} {
