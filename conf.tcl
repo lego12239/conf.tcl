@@ -827,7 +827,7 @@ proc _toks_read {_ctx} {
 		  [dict get $ctx src lineno_tok]]]
 	}
 
-	return [llength [dict get $ctx src toks]]
+	return $tok
 }
 
 proc _tok_mk {code data lineno} {
