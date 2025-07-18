@@ -19,54 +19,45 @@ namespace eval conf {
 ######################################################################
 # Load a conf from a file.
 # SYNOPSIS:
-#   load_from_file [-hd STR] [-default CAS] [-path STR] [-cb CB_AND_PRIV]
-#     FILE_NAME
+#   load_from_file [-hd STR] [-path STR] CALLBACK FILE_NAME
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default CAS
-#       use CAS(list with 2 elements: conf and spec) as an initial(default)
-#       conf.
 #   -path STR
 #       use STR as file path prefix for every included file
-#   -cb CB_AND_PRIV
-#       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
-#       proc as value set/append callback; and specified PRIV will be
-#       used as initial value for priv in a context.
-#       Callback must accept parameters:
+#
+#   CALLBACK
+#       CALLBACK is a proc name or a list - {CALLBACK ARG1 ...}. This callback
+#       is called on every parsed key-value and section enter/leave. It is
+#       called with specified arguments and appended context variable name,
+#       the operation, a full key name, a value.
+#       Callback last parameters must be:
 #       - ctx var name
-#       - conf var name
 #       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
-#       - var name with key full name(list with sect names and a key name)
-#       - value var name
-#       If key name and/or key value is changed, then this new key and/or
-#       value will be saved in a parsed conf dict.
-#       Callback must ret value type(S or L) or "" if value shouldn't be
-#       saved(we don't want it or we already saved it ourselves in a
-#       callback).
-# RETURN:
-#   {CONF CSPEC}   - dict with conf parameters, conf dict specification
-#   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
-#                            specification and priv
+#       - key full name(list with sect names and a key name)
+#       - value
+#   FILE_NAME
+#       A file name to parse.
+#
 proc load_from_file {args} {
-	set opts [_opts_parse {-hd 1 -default 1 -path 1 -cb 1} args]
-	if {[llength $args] < 1} {
-		error "File name must be specified"
-	} elseif {[llength $args] > 1} {
-		error "Too many files are specified"
+	set opts [_opts_parse {-hd 1 -path 1} args]
+	if {[llength $args] < 2} {
+		error "Callback and file name must be specified"
+	} elseif {[llength $args] > 2} {
+		error "Too many arguments are specified"
 	}
-	set fh [open [lindex $args 0]]
+	set fh [open [lindex $args 1]]
 	set src [dict create\
-	  name [lindex $args 0]\
+	  name [lindex $args 1]\
 	  src $fh\
 	  gets_r [namespace current]::gets_from_fh]
 
-	set ctx [_ctx_mk $opts]
+	set ctx [_ctx_mk [lindex $args 0] $opts]
 	_ctx_src_push ctx $src
 
 	set err ""
-	if {[catch {_parse ctx [dict get $ctx default]} conf]} {
-		set err [list $conf $::errorInfo $::errorCode]
+	if {[catch {_parse ctx} res]} {
+		set err [list $res $::errorInfo $::errorCode]
 	}
 
 	_ctx_src_pop ctx
@@ -75,120 +66,99 @@ proc load_from_file {args} {
 	if {$err ne ""} {
 		error {*}$err
 	}
-	return [list $conf [dict get $ctx cspec]]
 }
 
 # Load a conf from an open file handle.
 # SYNOPSIS:
-#   load_from_fh [-hd STR] [-default CAS] [-path STR] [-cb CB_AND_PRIV] CHAN
+#   load_from_fh [-hd STR] [-path STR] CALLBACK CHAN
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default CAS
-#       use CAS(list with 2 elements: conf and spec) as an initial(default)
-#       conf.
 #   -path STR
 #       use STR as file path prefix for every included file
-#   -cb CB_AND_PRIV
-#       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
-#       proc as value set/append callback; and specified PRIV will be
-#       used as initial value for priv in a context.
-#       Callback must accept parameters:
+#
+#   CALLBACK
+#       CALLBACK is a proc name or a list - {CALLBACK ARG1 ...}. This callback
+#       is called on every parsed key-value and section enter/leave. It is
+#       called with specified arguments and appended context variable name,
+#       the operation, a full key name, a value.
+#       Callback last parameters must be:
 #       - ctx var name
-#       - conf var name
 #       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
-#       - var name with key full name(list with sect names and a key name)
-#       - value var name
-#       If key name and/or key value is changed, then this new key and/or
-#       value will be saved in a parsed conf dict.
-#       Callback must ret value type(S or L) or "" if value shouldn't be
-#       saved(we don't want it or we already saved it ourselves in a
-#       callback).
-# RETURN:
-#   {CONF CSPEC}   - dict with conf parameters, conf dict specification
-#   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
-#                            specification and priv
+#       - key full name(list with sect names and a key name)
+#       - value
+#   CHAN
+#       A chan to parse data from.
+#
 proc load_from_fh {args} {
-	set opts [_opts_parse {-hd 1 -default 1 -path 1 -cb 1} args]
-	if {[llength $args] < 1} {
-		error "Chan must be specified"
-	} elseif {[llength $args] > 1} {
-		error "Too many chans are specified"
+	set opts [_opts_parse {-hd 1 -path 1} args]
+	if {[llength $args] < 2} {
+		error "Callback and chan must be specified"
+	} elseif {[llength $args] > 2} {
+		error "Too many arguments are specified"
 	}
 	set src [dict create\
-	  name "FH:[lindex $args 0]"\
-	  src [lindex $args 0]\
+	  name "FH:[lindex $args 1]"\
+	  src [lindex $args 1]\
 	  gets_r [namespace current]::gets_from_fh]
 
-	set ctx [_ctx_mk $opts]
+	set ctx [_ctx_mk [lindex $args 0] $opts]
 	_ctx_src_push ctx $src
-	set conf [_parse ctx [dict get $ctx default]]
+	_parse ctx
 	_ctx_src_pop ctx
-
-	return [list $conf [dict get $ctx cspec]]
 }
 
 # Load a conf from a string.
 # SYNOPSIS:
-#   load_from_str [-hd STR] [-default CAS] [-path STR] [-cb CB_AND_PRIV]
-#     [-s START_IDX] [-e END_IDX] CONF_STR
+#   load_from_str [-hd STR] [-path STR] [-s START_IDX] [-e END_IDX]
+#     CALLBACK CONF_STR
 #
 #   -hd STR
 #       use STR as hierarchy delimiter in key names and group names
-#   -default CAS
-#       use CAS(list with 2 elements: conf and spec) as an initial(default)
-#       conf.
 #   -path STR
 #       use STR as file path prefix for every included file
-#   -cb CB_AND_PRIV
-#       CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
-#       proc as value set/append callback; and specified PRIV will be
-#       used as initial value for priv in a context.
-#       Callback must accept parameters:
-#       - ctx var name
-#       - conf var name
-#       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
-#       - var name with key full name(list with sect names and a key name)
-#       - value var name
-#       If key name and/or key value is changed, then this new key and/or
-#       value will be saved in a parsed conf dict.
-#       Callback must ret value type(S or L) or "" if value shouldn't be
-#       saved(we don't want it or we already saved it ourselves in a
-#       callback).
 #   -s START_IDX
 #       start index for the parsing
 #       0 by default
 #   -e END_IDX
 #       end index for the parsing(including char at this idx)
 #       last char idx by default
-# RETURN:
-#   {CONF CSPEC}   - dict with conf parameters, conf dict specification
-#   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
-#                            specification and priv
+#
+#   CALLBACK
+#       CALLBACK is a proc name or a list - {CALLBACK ARG1 ...}. This callback
+#       is called on every parsed key-value and section enter/leave. It is
+#       called with specified arguments and appended context variable name,
+#       the operation, a full key name, a value.
+#       Callback last parameters must be:
+#       - ctx var name
+#       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
+#       - key full name(list with sect names and a key name)
+#       - value
+#   CONF_STR
+#       A string to parse.
+#
 proc load_from_str {args} {
-	set opts [_opts_parse {-hd 1 -default 1 -path 1 -cb 1 -s 1 -e 1} args]
-	if {[llength $args] < 1} {
-		error "String must be specified"
-	} elseif {[llength $args] > 1} {
-		error "Too many strings are specified"
+	set opts [_opts_parse {-hd 1 -path 1 -s 1 -e 1} args]
+	if {[llength $args] < 2} {
+		error "Callback and string must be specified"
+	} elseif {[llength $args] > 2} {
+		error "Too many arguments are specified"
 	}
 	set src [dict create\
 	  name "STR"\
-	  src [lindex $args 0]\
+	  src [lindex $args 1]\
 	  gets_r [namespace current]::gets_from_str]
 	set opts [dict merge\
-	  [dict create -s 0 -e [string length [lindex $args 0]]]\
+	  [dict create -s 0 -e [string length [lindex $args 1]]]\
 	  $opts]
 	if {[dict get $opts -e] < [dict get $opts -s]} {
 		error "-e is less than -s"
 	}
-	set ctx [_ctx_mk $opts]
+	set ctx [_ctx_mk [lindex $args 0] $opts]
 	_ctx_src_push ctx $src
 #	puts "CTX: $ctx"
-	set conf [_parse ctx [dict get $ctx default]]
+	_parse ctx
 	_ctx_src_pop ctx
-
-	return [list $conf [dict get $ctx cspec]]
 }
 
 # Parse proc options.
@@ -256,18 +226,18 @@ proc _opts_parse {spec _argslist {prms {}}} {
 	return $opts
 }
 
-proc _parse {_ctx conf} {
+proc _parse {_ctx} {
 	upvar $_ctx ctx
 	set err ""
 	set err_from_lineno -1
 	set eprefix ""
-	if {[catch {__parse ctx $conf} conf]} {
+	if {[catch {__parse ctx} res]} {
 		if {[_toks_cnt ctx] > 0} {
 			set err_from_lineno [_toks_lineno ctx 0]
 		} elseif {$::errorCode eq "CONFERR"} {
 			set err_from_lineno [dict get $ctx src lineno]
 		}
-		set err [list "$conf" "$::errorInfo" $::errorCode]
+		set err [list "$res" "$::errorInfo" $::errorCode]
 	}
 	if {[dict get $ctx src buf] ne ""} {
 		if {[string index [dict get $ctx src buf] 0] eq {"}} {
@@ -292,11 +262,9 @@ proc _parse {_ctx conf} {
 
 		error {*}$err
 	}
-
-	return $conf
 }
 
-proc __parse {_ctx conf} {
+proc __parse {_ctx} {
 	upvar $_ctx ctx
 	# cache a sect value
 	set sect [lindex [dict get $ctx sect] end]
@@ -365,7 +333,7 @@ proc __parse {_ctx conf} {
 		F {
 			set fmask [_toks_data ctx 1]
 			_toks_rm_head ctx 2
-			_parse_file_inclusion ctx conf $fmask
+			_parse_file_inclusion ctx $fmask
 #			puts "sect: [dict get $ctx sect]"
 		}
 		. {
@@ -385,8 +353,6 @@ proc __parse {_ctx conf} {
 		  KEY = VAL or KEY = \[ or GROUP_NAME \{ or \} or\
 		  \[GROUP_NAME\]" "" CONFERR
 	}
-
-	return $conf
 }
 
 proc _parse_list {_ctx} {
@@ -429,9 +395,8 @@ proc _parse_list {_ctx} {
 	return $list
 }
 
-proc _parse_file_inclusion {_ctx _conf fmask} {
+proc _parse_file_inclusion {_ctx fmask} {
 	upvar $_ctx ctx
-	upvar $_conf conf
 
 #	puts "DBG _parse_file_inclusion: $ctx"
 	set fnames [lsort [glob -directory [dict get $ctx prms -path] $fmask]]
@@ -443,8 +408,8 @@ proc _parse_file_inclusion {_ctx _conf fmask} {
 		  gets_r [namespace current]::gets_from_fh]
 		_ctx_src_push ctx $src
 		set err ""
-		if {[catch {_parse ctx $conf} conf]} {
-			set err [list $conf $::errorInfo $::errorCode]
+		if {[catch {_parse ctx} res]} {
+			set err [list $res $::errorInfo $::errorCode]
 		}
 		_ctx_src_pop ctx
 		close $fh
@@ -456,39 +421,32 @@ proc _parse_file_inclusion {_ctx _conf fmask} {
 
 # Create an initial context.
 # prms:
+#  cb   - a callback
 #  prms - a dict with parameters:
 #         -hd - hierarchy delimiter
-#         -default - a list with a default conf and its spec
 #         -path    - a string with a default file path prefix
-#         -cb      - a value set/append callback
 #         -s  - start offset for src str(only for gets_from_str)
 #         -e  - last offset for src str(only for gets_from_str)
 # ret:
 #  context dict with keys:
 #    prms - a dict with parameters
+#    cb   - a specified callback
 #    src  - a current source
 #    srcs - a stack with sources
 #    sect - a section stack(section is a hierarchy level name)
 #    sect_type - a section type stack
-proc _ctx_mk {{prms ""}} {
+proc _ctx_mk {cb {prms ""}} {
 	set prms_def [dict create\
 	  -hd ""\
-	  -default ""\
-	  -path "./"\
-	  -cb ""]
+	  -path "./"]
 	set prms [dict merge $prms_def $prms]
 	if {[string index [dict get $prms -path] end] ne "/"} {
 		dict append prms -path "/"
 	}
-	set cb [dict get $prms -cb]
-	set default [lindex [dict get $prms -default] 0]
-	set cspec [lindex [dict get $prms -default] 1]
 
 	return [dict create\
 	  prms $prms\
 	  cb $cb\
-	  default $default\
-	  cspec $cspec\
 	  src [dict create]\
 	  srcs [list]\
 	  sect [list]\
@@ -507,7 +465,7 @@ proc _ctx_mk {{prms ""}} {
 #     buf - input buffer(lines read from a source)
 #   for parser:
 #     toks - input tokens buffer(tokens read, but not yet removed)
-#     toks_css - a cache for _toks_match(tokens codes in one string)
+#     toks_css - a cache for _toks_head_is_match(tokens codes in one string)
 proc _ctx_src_push {_ctx src} {
 	upvar $_ctx ctx
 	set src_def [dict create\
