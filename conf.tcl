@@ -76,9 +76,6 @@ proc load_from_file {args} {
 	if {$err ne ""} {
 		error {*}$err
 	}
-	if {[dict exists $opts -cb]} {
-		return [list $conf [dict get $ctx cspec] [dict get $ctx priv]]
-	}
 	return [list $conf [dict get $ctx cspec]]
 }
 
@@ -130,9 +127,6 @@ proc load_from_fh {args} {
 	set conf [_parse ctx [dict get $ctx default]]
 	_ctx_src_pop ctx
 
-	if {[dict exists $opts -cb]} {
-		return [list $conf [dict get $ctx cspec] [dict get $ctx priv]]
-	}
 	return [list $conf [dict get $ctx cspec]]
 }
 
@@ -196,9 +190,6 @@ proc load_from_str {args} {
 	set conf [_parse ctx [dict get $ctx default]]
 	_ctx_src_pop ctx
 
-	if {[dict exists $opts -cb]} {
-		return [list $conf [dict get $ctx cspec] [dict get $ctx priv]]
-	}
 	return [list $conf [dict get $ctx cspec]]
 }
 
@@ -252,6 +243,8 @@ proc _parse {_ctx conf} {
 	if {[catch {__parse ctx $conf} conf]} {
 		if {[_toks_cnt ctx] > 0} {
 			set err_from_lineno [_toks_lineno ctx 0]
+		} elseif {$::errorCode eq "CONFERR"} {
+			set err_from_lineno [dict get $ctx src lineno]
 		}
 		set err [list "$conf" "$::errorInfo" $::errorCode]
 	}
@@ -301,48 +294,50 @@ proc __parse {_ctx conf} {
 
 	while {[_toks_read ctx] > 0} {
 		set expname [_exptbl_get_match $exptbl [dict get $ctx src toks_css]]
-#		puts "DBG __parse: expname=$expname"
+#		puts "DBG __parse: expname=$expname, toks_css=[dict get $ctx src toks_css]"
 		switch $expname {
 		"=S" {
-			_conf_kv_set_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
+			_cb_call ctx "=S" [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
 		}
 		"+=S" {
-			_conf_kv_append_str ctx conf [_toks_data ctx 0] [_toks_data ctx 2]
+			_cb_call ctx "+=S" [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
 		}
 		"?=S" {
-			_conf_kv_set_str_if_not_exist ctx conf [_toks_data ctx 0]\
-			  [_toks_data ctx 2]
+			_cb_call ctx "?=S" [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
 		}
 		"=L" {
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
-			_conf_kv_set_list ctx conf $name [_parse_list ctx]
+			_cb_call ctx "=L" $name [_parse_list ctx]
 		}
 		"+=L" {
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
-			_conf_kv_append_list ctx conf $name [_parse_list ctx]
+			_cb_call ctx "+=L" $name [_parse_list ctx]
 		}
 		"?=L" {
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
-			_conf_kv_set_list_if_not_exist ctx conf $name [_parse_list ctx]
+			_cb_call ctx "?=L" $name [_parse_list ctx]
 		}
 		SECT {
 			_sect_push ctx 0 [_toks_data ctx 1]
+			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 3
 #			puts "sect: [dict get $ctx sect]"
 		}
 		SECT_PUSH {
 			_sect_push ctx 1 [_toks_data ctx 0]
+			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 2
 #			puts "sect: [dict get $ctx sect]"
 		}
 		SECT_POP {
 			_sect_pop ctx 1
+			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		}
@@ -361,6 +356,13 @@ proc __parse {_ctx conf} {
 			  \[GROUP_NAME\]" "" CONFERR
 		}
 		}
+	}
+
+	if {[_toks_cnt ctx] > 0} {
+		error "Unexpected token sequence:\
+		  \"[_toks_dump ctx]\". Want:\
+		  KEY = VAL or KEY = \[ or GROUP_NAME \{ or \} or\
+		  \[GROUP_NAME\]" "" CONFERR
 	}
 
 	return $conf
@@ -410,6 +412,7 @@ proc _parse_file_inclusion {_ctx _conf fmask} {
 	upvar $_ctx ctx
 	upvar $_conf conf
 
+#	puts "DBG _parse_file_inclusion: $ctx"
 	set fnames [lsort [glob -directory [dict get $ctx prms -path] $fmask]]
 	foreach fname $fnames {
 		set fh [open $fname]
@@ -456,15 +459,13 @@ proc _ctx_mk {{prms ""}} {
 	if {[string index [dict get $prms -path] end] ne "/"} {
 		dict append prms -path "/"
 	}
-	set cb [lindex [dict get $prms -cb] 0]
-	set priv [lindex [dict get $prms -cb] 1]
+	set cb [dict get $prms -cb]
 	set default [lindex [dict get $prms -default] 0]
 	set cspec [lindex [dict get $prms -default] 1]
 
 	return [dict create\
 	  prms $prms\
 	  cb $cb\
-	  priv $priv\
 	  default $default\
 	  cspec $cspec\
 	  src [dict create]\
@@ -564,189 +565,12 @@ proc _sect_get {_ctx} {
 	return [join [lindex [dict get $ctx sect] end]]
 }
 
-# Assign a specified value to a specified name
-# prms:
-#  _ctx   - ctx var name
-#  _conf  - conf var name
-#  name   - a conf parameter name(string)
-#  value  - a conf parameter value
-proc _conf_kv_set_str {_ctx _conf name value} {
+proc _cb_call {_ctx op kname kval} {
 	upvar $_ctx ctx
-	upvar $_conf conf
 
-	_conf_kv_set ctx conf $name $value "=S"
-}
-
-# Assign a specified list to a specified name
-# prms:
-#  _ctx   - ctx var name
-#  _conf  - conf var name
-#  name   - a conf parameter name(string)
-#  value  - a conf parameter value(list)
-proc _conf_kv_set_list {_ctx _conf name value} {
-	upvar $_ctx ctx
-	upvar $_conf conf
-
-	_conf_kv_set ctx conf $name $value "=L"
-}
-
-# Assign a specified value to a specified name
-# prms:
-#  _ctx   - ctx var name
-#  _conf  - conf var name
-#  name   - a conf parameter name(string)
-#  vlist  - a conf parameter value
-#  op     - operation (=S or =L)
-proc _conf_kv_set {_ctx _conf name vlist op} {
-	upvar $_ctx ctx
-	upvar $_conf conf
-	set data ""
-
-	set type [string index $op end]
 	set names [_sect_get ctx]
-	lappend names {*}[_mk_name ctx $name]
-	if {[dict get $ctx cb] ne ""} {
-		set type [[dict get $ctx cb] ctx conf $op names vlist]
-		if {$type eq ""} {
-			return
-		}
-	}
-	# Protect from a case where we assign to an existing key as if it would
-	# be a section. E.g. "k1=\[k2 v2 k4 v4\] k1.k4=v44" config can
-	# mistakenly got {k1 {k2 v2 k4 v44}} instead of {k1 {k4 v44}}.
-	set ret [spec_key_existence [dict get $ctx cspec] $names data]
-	if {$ret == -2} {
-		dict set conf {*}$data ""
-		spec_path_unset {ctx cspec} $data
-	}
-	dict set conf {*}$names $vlist
-	spec_key_set {ctx cspec} $names $type
-}
-
-# Assign a specified value to a specified name if it's not exist.
-# prms:
-#  _ctx   - ctx var name
-#  _conf  - conf var name
-#  name   - a conf parameter name(string)
-#  value  - a conf parameter value
-proc _conf_kv_set_str_if_not_exist {_ctx _conf name value} {
-	upvar $_ctx ctx
-	upvar $_conf conf
-
-	_conf_kv_set_if_not_exist ctx conf $name $value "?=S"
-}
-
-# Assign a specified list to a specified name if it's not exist.
-# prms:
-#  _ctx   - ctx var name
-#  _conf  - conf var name
-#  name   - a conf parameter name(string)
-#  value  - a conf parameter value(list)
-proc _conf_kv_set_list_if_not_exist {_ctx _conf name value} {
-	upvar $_ctx ctx
-	upvar $_conf conf
-
-	_conf_kv_set_if_not_exist ctx conf $name $value "?=L"
-}
-
-# Assign a specified value to a specified name if it's not exist.
-# prms:
-#  _ctx   - ctx var name
-#  _conf  - conf var name
-#  name   - a conf parameter name(string)
-#  vlist  - a conf parameter value
-#  op     - "?=S" or "?=L"
-proc _conf_kv_set_if_not_exist {_ctx _conf name vlist op} {
-	upvar $_ctx ctx
-	upvar $_conf conf
-
-	set type [string index $op end]
-	set names [_sect_get ctx]
-	lappend names {*}[_mk_name ctx $name]
-	if {[dict get $ctx cb] ne ""} {
-		set type [[dict get $ctx cb] ctx conf $op names vlist]
-		if {$type eq ""} {
-			return
-		}
-	}
-	set ret [spec_key_existence [dict get $ctx cspec] $names]
-	if {$ret != -1} {
-		return
-	}
-	dict set conf {*}$names $vlist
-	spec_key_set {ctx cspec} $names $type
-}
-
-# Append a specified value to a specified name
-# prms:
-#  _ctx   - ctx var name
-#  _conf  - conf var name
-#  name   - a conf parameter name(string)
-#  value  - a conf parameter value
-proc _conf_kv_append_str {_ctx _conf name value} {
-	upvar $_ctx ctx
-	upvar $_conf conf
-
-	_conf_kv_append ctx conf $name $value "+=S"
-}
-
-# Append a specified list to a specified name
-# prms:
-#  _ctx   - ctx var name
-#  _conf  - conf var name
-#  name   - a conf parameter name(string)
-#  value  - a conf parameter value(list)
-proc _conf_kv_append_list {_ctx _conf name value} {
-	upvar $_ctx ctx
-	upvar $_conf conf
-
-	_conf_kv_append ctx conf $name $value "+=L"
-}
-
-# Append a specified values list to a specified name
-# prms:
-#  _ctx - ctx var name
-#  _conf  - conf var name
-#  name - a conf parameter name(string)
-#  vlist  - a conf parameter value
-#  op     - "+=S" or "+=L"
-proc _conf_kv_append {_ctx _conf name vlist op} {
-	upvar $_ctx ctx
-	upvar $_conf conf
-	set data ""
-
-	set type [string index $op end]
-	set names [_sect_get ctx]
-	lappend names {*}[_mk_name ctx $name]
-	if {[dict get $ctx cb] ne ""} {
-		set type [[dict get $ctx cb] ctx conf $op names vlist]
-		if {$type eq ""} {
-			return
-		}
-	}
-	if {$type eq "S"} {
-		set vlist [list $vlist]
-	}
-	# Protect from reassign mistakes. See _conf_kv_set proc for the
-	# explanation.
-	set ret [spec_key_existence [dict get $ctx cspec] $names data]
-	if {$ret == -2} {
-		dict set conf {*}$data ""
-		spec_path_unset {ctx cspec} $data
-	} elseif {$ret == 1} {
-		# This isn't actually needed, becase {*}$names key will replaced
-		# with new value in any case.
-		dict set conf {*}$names ""
-		spec_path_unset {ctx cspec} $names
-	} elseif {$ret == 0} {
-		if {$data eq "S"} {
-			set vlist [list [dict get $conf {*}$names] {*}$vlist]
-		} else {
-			set vlist [list {*}[dict get $conf {*}$names] {*}$vlist]
-		}
-	}
-	dict set conf {*}$names $vlist
-	spec_key_set {ctx cspec} $names "L"
+	lappend names {*}[_mk_name ctx $kname]
+	{*}[dict get $ctx cb] ctx $op $names $kval
 }
 
 proc _exptbl_compile {tbl} {
@@ -777,18 +601,21 @@ proc _exptbl_compile {tbl} {
 }
 
 proc _exptbl_get_match {exptbl toks_css} {
+#	puts "DBG _exptbl_get_match: $exptbl $toks_css"
 	set len [llength $toks_css]
 	set key ""
 	set exp ""
-	for {set i 0} {$i < $len} {incr i} {
-		append key "[lindex $toks_css $i 0] "
-		if {![dict exists $exptbl $key]} {
-			break
-		}
-		set exp [dict get $exptbl $key]
+#	for {set i 0} {$i < $len} {incr i} {
+#		append key "[lindex $toks_css $i 0] "
+#		if {![dict exists $exptbl $key]} {
+#			break
+#		}
+#		set exp [dict get $exptbl $key]
+#	}
+	if {[dict exists $exptbl "[join $toks_css " "] "]} {
+		return [dict get $exptbl "[join $toks_css " "] "]
 	}
-
-	return $exp
+	return ""
 }
 
 # Get list of names from supplied str by splitting it on hd char sequence.
