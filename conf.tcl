@@ -49,16 +49,15 @@ namespace eval conf {
 #   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
 #                            specification and priv
 proc load_from_file {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1}] opts idx
-	if {$idx >= [llength $args]} {
+	set opts [_opts_parse {-hd 1 -default 1 -path 1 -cb 1} args]
+	if {[llength $args] < 1} {
 		error "File name must be specified"
-	}
-	if {($idx + 1) != [llength $args]} {
+	} elseif {[llength $args] > 1} {
 		error "Too many files are specified"
 	}
-	set fh [open [lindex $args $idx]]
+	set fh [open [lindex $args 0]]
 	set src [dict create\
-	  name [lindex $args $idx]\
+	  name [lindex $args 0]\
 	  src $fh\
 	  gets_r [namespace current]::gets_from_fh]
 
@@ -110,16 +109,15 @@ proc load_from_file {args} {
 #   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
 #                            specification and priv
 proc load_from_fh {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1}] opts idx
-	if {$idx >= [llength $args]} {
+	set opts [_opts_parse {-hd 1 -default 1 -path 1 -cb 1} args]
+	if {[llength $args] < 1} {
 		error "Chan must be specified"
-	}
-	if {($idx + 1) != [llength $args]} {
+	} elseif {[llength $args] > 1} {
 		error "Too many chans are specified"
 	}
 	set src [dict create\
-	  name "FH:[lindex $args $idx]"\
-	  src [lindex $args $idx]\
+	  name "FH:[lindex $args 0]"\
+	  src [lindex $args 0]\
 	  gets_r [namespace current]::gets_from_fh]
 
 	set ctx [_ctx_mk $opts]
@@ -159,27 +157,27 @@ proc load_from_fh {args} {
 #       callback).
 #   -s START_IDX
 #       start index for the parsing
+#       0 by default
 #   -e END_IDX
 #       end index for the parsing(including char at this idx)
+#       last char idx by default
 # RETURN:
 #   {CONF CSPEC}   - dict with conf parameters, conf dict specification
 #   {CONF CSPEC PRIV} - dict with conf parameters, conf dict
 #                            specification and priv
 proc load_from_str {args} {
-	lassign [_opts_parse $args {-hd 1 -default 1 -path 1 -cb 1 -s 1 -e 1}]\
-	  opts idx
-	if {$idx >= [llength $args]} {
+	set opts [_opts_parse {-hd 1 -default 1 -path 1 -cb 1 -s 1 -e 1} args]
+	if {[llength $args] < 1} {
 		error "String must be specified"
-	}
-	if {($idx + 1) != [llength $args]} {
+	} elseif {[llength $args] > 1} {
 		error "Too many strings are specified"
 	}
 	set src [dict create\
 	  name "STR"\
-	  src [lindex $args $idx]\
+	  src [lindex $args 0]\
 	  gets_r [namespace current]::gets_from_str]
 	set opts [dict merge\
-	  [dict create -s 0 -e [string length [lindex $args $idx]]]\
+	  [dict create -s 0 -e [string length [lindex $args 0]]]\
 	  $opts]
 	if {[dict get $opts -e] < [dict get $opts -s]} {
 		error "-e is less than -s"
@@ -193,46 +191,69 @@ proc load_from_str {args} {
 	return [list $conf [dict get $ctx cspec]]
 }
 
-# Parse options from argslist.
-# Stop on first non-option argument or after --.
+# Parse proc options.
 # prms:
-#  argslist - arguments to parse
-#  spec     - opts spec. A dict where:
-#             key - opt name (started with "-")
-#             value - 0 for opt without argument
-#                     1 for opt with argument
+#  _argslist  - a name of list variable with arguments to parse
+#  spec       - opts spec. A dict where:
+#               key - opt name (started with "-")
+#               value - 0 for opt without argument
+#                       1 for opt with argument
+#  prms       - parameters; you don't need to specify all parameters,
+#               just those that differ from the default value.
+#               possible parameters:
+#               stop_on_nonopts - stop on first non-option argument
+#                                 1 by default
+#               fail_on_unknown_opt - fail if unknown option is found
+#                                 1 by default
+#
 # ret:
-#  list - 1 item is opts dict with opts from argslist, 2 item is index for first
-#         non-option argument
+#  DICT - opts dict with opts from argslist
 #
+# This proc parse options in a specified _argslist.
+# Every found option is removed from the list.
+# Thus, after proc is finished _argslist contains only non option arguments.
+# Stop on first non-option argument or after --.
 # E.g.:
-#  _opts_parse "-dval -t 7 -- fname q" {-dval 0 -D 1 -t 1}
+#  _opts_parse {-dval 0 -D 1 -t 1} "-dval -t 7 -- fname q"
 #
-proc _opts_parse {argslist spec} {
+proc _opts_parse {spec _argslist {prms {}}} {
+	upvar $_argslist argslist
+	set nonopts [list]
 	set opts [dict create]
 
+	set prms [dict merge {
+	  stop_on_nonopt 1
+	  fail_on_unknown_opt 1} $prms]
+
 	for {set i 0} {$i < [llength $argslist]} {incr i} {
-		set lex [lindex $argslist $i]
-		if {![string equal -length 1 $lex "-"]} {
-			break
-		}
-		if {$lex eq "--"} {
+		set arg [lindex $argslist $i]
+		if {$arg eq "--"} {
 			incr i
 			break
 		}
-		if {![dict exists $spec $lex]} {
-			error "wrong option: $lex"
-		}
-		set val [dict get $spec $lex]
-		if {[lindex $val 0]} {
-			incr i
-			dict set opts $lex [lindex $argslist $i]
+		if {[dict exists $spec $arg]} {
+			if {[dict get $spec $arg]} {
+				incr i
+				dict set opts $arg [lindex $argslist $i]
+			} else {
+				dict incr opts $arg
+			}
 		} else {
-			dict incr opts $lex
+			if {([string index $arg 0] eq "-") &&
+			    [dict get $prms fail_on_unknown_opt]} {
+				error "unknown option: $arg"
+			}
+			if {[dict get $prms stop_on_nonopt]} {
+				break
+			}
+			lappend nonopts $arg
 		}
 	}
 
-	return [list $opts $i]
+	lappend nonopts {*}[lrange $argslist $i end]
+	set argslist $nonopts
+
+	return $opts
 }
 
 proc _parse {_ctx conf} {
