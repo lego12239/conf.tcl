@@ -633,14 +633,15 @@ proc _toks_read {_ctx} {
 		# Debug output
 #		puts "$tok: '[dict get $ctx src tok_data]'"
 		_toks_add_tail ctx [list [_tok_mk $tok [dict get $ctx src tok_data]\
-		  [dict get $ctx src lineno_tok]]]
+		  [dict get $ctx src lineno_tok]\
+		  [dict get $ctx src lineno_tok_end]]]
 	}
 
 	return $tok
 }
 
-proc _tok_mk {code data lineno} {
-	return [list $code $data $lineno]
+proc _tok_mk {code data lineno lineno_end} {
+	return [list $code $data $lineno $lineno_end]
 }
 
 proc _toks_add_tail {_ctx toks} {
@@ -791,6 +792,7 @@ proc _get_tok {_ctx} {
 	} else {
 		set str [lindex $mstr 0]
 	}
+	dict set ctx src lineno_tok_end [dict get $ctx src lineno]
 	dict set ctx src tok_data $str
 	return $tok
 }
