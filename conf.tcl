@@ -231,6 +231,8 @@ proc _parse {_ctx} {
 	set err ""
 	set err_from_lineno -1
 	set eprefix ""
+	set epostfix ""
+
 	if {[catch {__parse ctx} res]} {
 		if {[_toks_cnt ctx] > 0} {
 			set err_from_lineno [_toks_lineno ctx 0]
@@ -244,8 +246,8 @@ proc _parse {_ctx} {
 			set eprefix "Possible unclosed quotes at line\
 			  [dict get $ctx src lineno_tok]. "
 		} else {
-			set eprefix "Token input buffer:\
-			  '[dict get $ctx src buf]'. "
+			set epostfix " (Token input buffer:\
+			  '[dict get $ctx src buf]')"
 		}
 	}
 
@@ -256,9 +258,9 @@ proc _parse {_ctx} {
 		set eaddr "conf error at\
 		  [dict get $ctx src name]:${err_from_lineno}"
 		set emsg [lindex $err 0]
-		lset err 0 "${eaddr}: ${eprefix}$emsg"
+		lset err 0 "${eaddr}: ${eprefix}$emsg$epostfix"
 		set emsg [lindex $err 1]
-		lset err 1 "${eaddr}: ${eprefix}$emsg"
+		lset err 1 "${eaddr}: ${eprefix}$emsg$epostfix"
 
 		error {*}$err
 	}
