@@ -14,7 +14,7 @@ tcltest::test comments-1.0 {
 	set ::conf {}
 	conf::load_from_file {cb-1.0 ::conf} test.comments.conf
 	return $conf
-} -result {k v k1 v1 k2 v2 k3 v3}
+} -result {k v k1 v1 k2 v2 k3 v3 k4 v4 k5 v5}
 
 
 tcltest::cleanupTests
