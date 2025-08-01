@@ -185,4 +185,136 @@ tcltest::test err-8.2.4 {
 	conf::load_from_str -hd . cb-1.0 "k1?=\[v1] k2=\[v2]"
 } -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2]')"
 
+tcltest::test err-9.0 {
+	key start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "\[sect1] k1=v1"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-9.1 {
+	key start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "\[sect1\n] k1=v1"
+} -returnCodes error -result "conf error at STR:2: Key name must start on new line"
+
+tcltest::test err-9.2 {
+	key start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "sect1 { k1=v1 }"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: ' }')"
+
+tcltest::test err-9.3 {
+	key start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "sect1 {\n k1=v1\n } k2=v2"
+} -returnCodes error -result "conf error at STR:3: Key name must start on new line"
+
+tcltest::test err-10.0.0 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 \[sect1]"
+} -returnCodes error -result "conf error at STR:1: Section must start on new line"
+
+tcltest::test err-10.0.1 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "\[sect2] \[sect1]"
+} -returnCodes error -result "conf error at STR:1: Section must start on new line"
+
+tcltest::test err-10.0.2 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "\[sect2\n] \[sect1]"
+} -returnCodes error -result "conf error at STR:2: Section must start on new line"
+
+tcltest::test err-10.0.3 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "sect2 { \[sect1] \n}"
+} -returnCodes error -result "conf error at STR:1: Section must start on new line (Token input buffer: ' ')"
+
+tcltest::test err-10.0.4 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "sect2 {\n} \[sect1]"
+} -returnCodes error -result "conf error at STR:2: Section must start on new line"
+
+tcltest::test err-10.1.0 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 sect1 {\n}"
+} -returnCodes error -result "conf error at STR:1: Section must start on new line"
+
+tcltest::test err-10.1.1 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "sect2 { sect1 {\n}\n}"
+} -returnCodes error -result "conf error at STR:1: Section must start on new line"
+
+tcltest::test err-10.1.2 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "\[sect2] sect1 {\n}"
+} -returnCodes error -result "conf error at STR:1: Section must start on new line"
+
+tcltest::test err-10.1.3 {
+	sect start on the same line (section)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "\[sect2\n] sect1 {\n}"
+} -returnCodes error -result "conf error at STR:2: Section must start on new line"
+
+tcltest::test err-11.0.0 {
+	file inclusion start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 < test.conf"
+} -returnCodes error -result "conf error at STR:1: File inclusion must start on new line"
+
+tcltest::test err-11.0.1 {
+	file inclusion start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "\[sect] < test.conf"
+} -returnCodes error -result "conf error at STR:1: File inclusion must start on new line"
+
+tcltest::test err-11.0.2 {
+	file inclusion start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "\[sect\n] < test.conf"
+} -returnCodes error -result "conf error at STR:2: File inclusion must start on new line"
+
+tcltest::test err-11.0.3 {
+	file inclusion start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "sect { < test.conf }"
+} -returnCodes error -result "conf error at STR:1: File inclusion must start on new line (Token input buffer: ' }')"
+
+tcltest::test err-11.0.4 {
+	file inclusion start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "sect\n{ < test.conf }"
+} -returnCodes error -result "conf error at STR:2: File inclusion must start on new line (Token input buffer: ' }')"
+
+tcltest::test err-11.0.5 {
+	file inclusion start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "sect\n{\n} < test.conf"
+} -returnCodes error -result "conf error at STR:3: File inclusion must start on new line"
+
+tcltest::test err-12.0 {
+	key start on the same line (file inclusion)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "< test.conf k2=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-12.1 {
+	sect start on the same line (file inclusion)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "< test.conf \[sect]"
+} -returnCodes error -result "conf error at STR:1: Section must start on new line"
+
+tcltest::test err-12.2 {
+	sect start on the same line (file inclusion)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "< test.conf sect {\n}"
+} -returnCodes error -result "conf error at STR:1: Section must start on new line"
+
 tcltest::cleanupTests
