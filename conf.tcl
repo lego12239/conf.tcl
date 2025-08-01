@@ -377,6 +377,12 @@ proc __parse {_ctx} {
 #			puts "sect: [dict get $ctx sect]"
 		}
 		F {
+			if {[_toks_lineno ctx 0] ==
+			    [dict get $ctx src lineno_prevexp_end]} {
+				error "File inclusion must start on new line" "" CONFERR
+			}
+			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 1]
+
 			set fmask [_toks_data ctx 1]
 			_toks_rm_head ctx 2
 			_parse_file_inclusion ctx $fmask
