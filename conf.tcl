@@ -696,6 +696,12 @@ proc _toks_lineno {_ctx idx} {
 	return [lindex [dict get $ctx src toks] $idx 2]
 }
 
+proc _toks_lineno_end {_ctx idx} {
+	upvar $_ctx ctx
+
+	return [lindex [dict get $ctx src toks] $idx 3]
+}
+
 proc _toks_dump {_ctx} {
 	upvar $_ctx ctx
 	set res ""
