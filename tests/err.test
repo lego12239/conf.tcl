@@ -53,4 +53,136 @@ tcltest::test err-6.0 {
 	conf::load_from_file -hd . cb-1.0
 } -returnCodes error -result "Callback and file name must be specified"
 
+tcltest::test err-7.0 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 k2=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-7.1.0 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 k2+=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-7.1.1 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1+=v1 k2+=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-7.1.2 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1+=v1 k2=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-7.2.0 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 k2?=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-7.2.1 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1?=v1 k2?=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-7.2.2 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1?=v1 k2=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-7.2.3 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1?=v1 k2+=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-7.2.4 {
+	key start on the same line
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1+=v1 k2?=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-8.0.0 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 k2=\[v2 v3]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2 v3]')"
+
+tcltest::test err-8.0.1 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=\[v1] k2=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-8.0.2 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=\[v1] k2=\[v2]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2]')"
+
+tcltest::test err-8.1.0 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 k2+=\[v2 v3]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2 v3]')"
+
+tcltest::test err-8.1.1 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=\[v1] k2+=\[v2 v3]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2 v3]')"
+
+tcltest::test err-8.1.2 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1+=\[v1] k2+=\[v2 v3]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2 v3]')"
+
+tcltest::test err-8.1.3 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1+=\[v1] k2=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-8.1.4 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1+=\[v1] k2=\[v2]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2]')"
+
+tcltest::test err-8.2.0 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=v1 k2?=\[v2 v3]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2 v3]')"
+
+tcltest::test err-8.2.1 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1=\[v1] k2?=\[v2 v3]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2 v3]')"
+
+tcltest::test err-8.2.2 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1?=\[v1] k2?=\[v2 v3]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2 v3]')"
+
+tcltest::test err-8.2.3 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1?=\[v1] k2=v2"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line"
+
+tcltest::test err-8.2.4 {
+	key start on the same line (list val)
+} -body {
+	conf::load_from_str -hd . cb-1.0 "k1?=\[v1] k2=\[v2]"
+} -returnCodes error -result "conf error at STR:1: Key name must start on new line (Token input buffer: 'v2]')"
+
 tcltest::cleanupTests
