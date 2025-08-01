@@ -345,18 +345,32 @@ proc __parse {_ctx} {
 			_cb_call ctx "?=L" $name [_parse_list ctx]
 		}
 		SECT {
+			if {[_toks_lineno ctx 0] ==
+			    [dict get $ctx src lineno_prevexp_end]} {
+				error "Section must start on new line" "" CONFERR
+			}
+			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 2]
+
 			_sect_push ctx 0 [_toks_data ctx 1]
 			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 3
 #			puts "sect: [dict get $ctx sect]"
 		}
 		SECT_PUSH {
+			if {[_toks_lineno ctx 0] ==
+			    [dict get $ctx src lineno_prevexp_end]} {
+				error "Section must start on new line" "" CONFERR
+			}
+			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 1]
+
 			_sect_push ctx 1 [_toks_data ctx 0]
 			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 2
 #			puts "sect: [dict get $ctx sect]"
 		}
 		SECT_POP {
+			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 0]
+
 			_sect_pop ctx 1
 			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 1
