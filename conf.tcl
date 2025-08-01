@@ -293,6 +293,7 @@ proc __parse {_ctx} {
 				error "Key name must start on new line" "" CONFERR
 			}
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 2]
+
 			_cb_call ctx "=S" [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
 		}
@@ -302,6 +303,7 @@ proc __parse {_ctx} {
 				error "Key name must start on new line" "" CONFERR
 			}
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 2]
+
 			_cb_call ctx "+=S" [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
 		}
@@ -311,6 +313,7 @@ proc __parse {_ctx} {
 				error "Key name must start on new line" "" CONFERR
 			}
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 2]
+
 			_cb_call ctx "?=S" [_toks_data ctx 0] [_toks_data ctx 2]
 			_toks_rm_head ctx 3
 		}
@@ -320,6 +323,7 @@ proc __parse {_ctx} {
 				error "Key name must start on new line" "" CONFERR
 			}
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 2]
+
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
 			_cb_call ctx "=L" $name [_parse_list ctx]
@@ -330,6 +334,7 @@ proc __parse {_ctx} {
 				error "Key name must start on new line" "" CONFERR
 			}
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 2]
+
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
 			_cb_call ctx "+=L" $name [_parse_list ctx]
@@ -340,6 +345,7 @@ proc __parse {_ctx} {
 				error "Key name must start on new line" "" CONFERR
 			}
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 2]
+
 			set name [_toks_data ctx 0]
 			_toks_rm_head ctx 3
 			_cb_call ctx "?=L" $name [_parse_list ctx]
