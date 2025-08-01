@@ -2,46 +2,55 @@ lappend auto_path [pwd]/../
 package require tcltest
 package require conf
 
+proc cb-1.0 {_ctx op kname kval} {
+}
+
 tcltest::test err-1.0 {
 	multiline quoted val(missed quotes)
 } -body {
-	conf::load_from_str "k=\n\n\n\"v1"
+	conf::load_from_str cb-1.0 "k=\n\n\n\"v1"
 } -returnCodes error -result "conf error at STR:1: Possible unclosed quotes at line 4. Unexpected token sequence: \"'k'#6(L1) '='#1(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test err-2.0.0 {
 	too many non parameter arguments
 } -body {
-	conf::load_from_file test.conf non-ex.conf
-} -returnCodes error -result {Too many files are specified}
+	conf::load_from_file cb-1.0 test.conf non-ex.conf
+} -returnCodes error -result {Too many arguments are specified}
 
 tcltest::test err-2.0.1 {
 	too many non parameter arguments
 } -body {
-	conf::load_from_fh stdin non-ex-chan
-} -returnCodes error -result {Too many chans are specified}
+	conf::load_from_fh cb-1.0 stdin non-ex-chan
+} -returnCodes error -result {Too many arguments are specified}
 
 tcltest::test err-2.0.2 {
 	too many non parameter arguments
 } -body {
-	conf::load_from_str "k=v1" "excessive=data_source"
-} -returnCodes error -result {Too many strings are specified}
+	conf::load_from_str cb-1.0 "k=v1" "excessive=data_source"
+} -returnCodes error -result {Too many arguments are specified}
 
 tcltest::test err-2.1 {
 	wrong option name
 } -body {
 	conf::load_from_str -wrong_parameter 1 "k=v1"
-} -returnCodes error -result {wrong option: -wrong_parameter}
+} -returnCodes error -result {unknown option: -wrong_parameter}
 
 tcltest::test err-4.0 {
 	read conf from a file with err
 } -body {
-	conf::load_from_file -hd . test.err.conf
+	conf::load_from_file -hd . cb-1.0 test.err.conf
 } -returnCodes error -result "conf error at test.err.conf:8: Unexpected token sequence: \"'k4'#6(L8) '='#1(L8) '}'#3(L9)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test err-5.0 {
 	read conf from a file with err (included file)
 } -body {
-	conf::load_from_file -hd . test_incl.4.conf
-} -returnCodes error -result "conf error at test_incl.4.conf:4: conf error at ./test_incl.4.1.conf:5: conf error at ./test_incl.4.2.conf:3: Unexpected token sequence: \"'k3'#6(L3) '='#1(L3) '}'#3(L4)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+	conf::load_from_file -hd . cb-1.0 test_incl.4.conf
+} -returnCodes error -result "conf error at test_incl.4.conf:3: conf error at ./test_incl.4.1.conf:4: conf error at ./test_incl.4.2.conf:3: Unexpected token sequence: \"'k3'#6(L3) '='#1(L3) '}'#3(L4)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+
+tcltest::test err-6.0 {
+	without file name
+} -body {
+	conf::load_from_file -hd . cb-1.0
+} -returnCodes error -result "Callback and file name must be specified"
 
 tcltest::cleanupTests

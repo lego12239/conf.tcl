@@ -2,11 +2,19 @@ lappend auto_path [pwd]/../
 package require tcltest
 package require conf
 
+proc cb-1.0 {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	dict set conf $kname $kval
+}
+
 tcltest::test comments-1.0 {
-	read conf from a missing file
+	read conf with comments
 } -body {
-	conf::load_from_file test.comments.conf
-} -result {{k v k1 v1 k2 v2 k3 v3} {k S k1 S k2 S k3 S}}
+	set ::conf {}
+	conf::load_from_file {cb-1.0 ::conf} test.comments.conf
+	return $conf
+} -result {k v k1 v1 k2 v2 k3 v3}
 
 
 tcltest::cleanupTests

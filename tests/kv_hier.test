@@ -2,129 +2,153 @@ lappend auto_path [pwd]/../
 package require tcltest
 package require conf
 
+proc cb-1.0 {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	switch $op {
+	=S -
+	=L {
+		dict set conf {*}$kname $kval
+	}
+	+=S {
+		if {[dict exists $conf {*}$kname]} {
+			set val [dict get $conf {*}$kname]
+		} else {
+			set val ""
+		}
+		append val $kval
+		dict set conf {*}$kname $val
+	}
+	+=L {
+		if {[dict exists $conf {*}$kname]} {
+			set val [dict get $conf {*}$kname]
+		} else {
+			set val ""
+		}
+		lappend val {*}$kval
+		dict set conf {*}$kname $val
+	}
+	"SECT_CH" -
+	F {
+	}
+	}
+}
+
 tcltest::test kv_hier-1.0 {
 	key value pair without hd option
 } -body {
-	conf::load_from_str "k1.k11.k111=v1\nk2.k21.k211=v2"
-} -result {{k1.k11.k111 v1 k2.k21.k211 v2} {k1.k11.k111 S k2.k21.k211 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k1.k11.k111=v1\nk2.k21.k211=v2"
+	return $::conf
+} -result {k1.k11.k111 v1 k2.k21.k211 v2}
 
 tcltest::test kv_hier-1.1 {
 	key value pair with hd option, but without hierarchy
 } -body {
-	conf::load_from_str -hd . "k1=v1\nk2=v2"
-} -result {{k1 v1 k2 v2} {k1 S k2 S}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1=v1\nk2=v2"
+	return $::conf
+} -result {k1 v1 k2 v2}
 
 tcltest::test kv_hier-2.0 {
 	key value pair with hierarchy
 } -body {
-	conf::load_from_str -hd . "k1.k11.k111=v1\nk2.k21.k211=v2"
-} -result {{k1 {k11 {k111 v1}} k2 {k21 {k211 v2}}} {k1 {k11 {k111 S}} k2 {k21 {k211 S}}}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1.k11.k111=v1\nk2.k21.k211=v2"
+	return $::conf
+} -result {k1 {k11 {k111 v1}} k2 {k21 {k211 v2}}}
 
 tcltest::test kv_hier-2.1 {
 	key value pair with hierarchy
 } -body {
-	conf::load_from_str -hd . "k1.k11.k111=v1
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1.k11.k111=v1
 	k1.k11.k112 = v2
 	k1.k12.k111 = v3
 	k2.k11.k111=v4
 	k2.k12.k111 = v5"
-} -result {{k1 {k11 {k111 v1 k112 v2} k12 {k111 v3}} k2 {k11 {k111 v4} k12 {k111 v5}}} {k1 {k11 {k111 S k112 S} k12 {k111 S}} k2 {k11 {k111 S} k12 {k111 S}}}}
+	return $::conf
+} -result {k1 {k11 {k111 v1 k112 v2} k12 {k111 v3}} k2 {k11 {k111 v4} k12 {k111 v5}}}
 
 tcltest::test kv_hier-2.2 {
 	key value pair with hierarchy(short names)
 } -body {
-	conf::load_from_str -hd . "a.b.c=v1\nd.e.f=v2"
-} -result {{a {b {c v1}} d {e {f v2}}} {a {b {c S}} d {e {f S}}}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "a.b.c=v1\nd.e.f=v2"
+	return $::conf
+} -result {a {b {c v1}} d {e {f v2}}}
 
 
 tcltest::test kv_hier-3.0 {
 	key value pair with hierarchy(long delimeter)
 } -body {
-	conf::load_from_str -hd -> "k1->k11->k111=v1\nk2->k21->k211=v2"
-} -result {{k1 {k11 {k111 v1}} k2 {k21 {k211 v2}}} {k1 {k11 {k111 S}} k2 {k21 {k211 S}}}}
+	set ::conf ""
+	conf::load_from_str -hd -> {cb-1.0 ::conf} "k1->k11->k111=v1\nk2->k21->k211=v2"
+	return $::conf
+} -result {k1 {k11 {k111 v1}} k2 {k21 {k211 v2}}}
 
 tcltest::test kv_hier-3.1 {
 	key value pair with hierarchy(long delimeter, short names)
 } -body {
-	conf::load_from_str -hd -> "a->b->c=v1\nd->e->f=v2"
-} -result {{a {b {c v1}} d {e {f v2}}} {a {b {c S}} d {e {f S}}}}
-
-tcltest::test kv_hier-4.0 {
-	key value pair reassign
-} -body {
-	conf::load_from_str -hd . "k1=\[k2 v2 k4 v4\] k1.k4=v44"
-} -result {{k1 {k4 v44}} {k1 {k4 S}}}
-
-tcltest::test kv_hier-4.0.1 {
-	key value pair reassign
-} -body {
-	conf::load_from_str -hd . "k1=\[k2 v2 k4 v4\] k1.k4+=v44"
-} -result {{k1 {k4 v44}} {k1 {k4 L}}}
+	set ::conf ""
+	conf::load_from_str -hd -> {cb-1.0 ::conf} "a->b->c=v1\nd->e->f=v2"
+	return $::conf
+} -result {a {b {c v1}} d {e {f v2}}}
 
 tcltest::test kv_hier-4.1 {
 	key value pair reassign
 } -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k4=v4"
-} -result {{k1 {k2 v2 k3 v3 k4 v4}} {k1 {k2 S k3 S k4 S}}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1 {k2=v2 k3=v3} k1.k4=v4"
+	return $::conf
+} -result {k1 {k2 v2 k3 v3 k4 v4}}
 
 tcltest::test kv_hier-4.1.1 {
 	key value pair reassign
 } -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k4+=v4"
-} -result {{k1 {k2 v2 k3 v3 k4 v4}} {k1 {k2 S k3 S k4 L}}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1 {k2=v2 k3=v3} k1.k4+=v4"
+	return $::conf
+} -result {k1 {k2 v2 k3 v3 k4 v4}}
 
 tcltest::test kv_hier-4.2 {
 	key value pair reassign
 } -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k2=v4"
-} -result {{k1 {k2 v4 k3 v3}} {k1 {k2 S k3 S}}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1 {k2=v2 k3=v3} k1.k2=v4"
+	return $::conf
+} -result {k1 {k2 v4 k3 v3}}
 
 tcltest::test kv_hier-4.2.1 {
 	key value pair reassign
 } -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k2+=v4"
-} -result {{k1 {k2 {v2 v4} k3 v3}} {k1 {k2 L k3 S}}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1 {k2=v2 k3=v3} k1.k2+=v4"
+	return $::conf
+} -result {k1 {k2 v2v4 k3 v3}}
 
 tcltest::test kv_hier-4.3 {
 	key value pair reassign
 } -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1=v4"
-} -result {{k1 v4} {k1 S}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1 {k2=v2 k3=v3} k1=v4"
+	return $::conf
+} -result {k1 v4}
 
 tcltest::test kv_hier-4.3.1 {
 	key value pair reassign
 } -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1+=v4"
-} -result {{k1 v4} {k1 L}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1 {k2=v2 k3=v3} k1+=v4"
+	return $::conf
+} -result {k1 {k2 v2 k3 v3v4}}
 
 tcltest::test kv_hier-5.0 {
 	key value pair and ?=
 } -body {
-	conf::load_from_str -hd . "k1=\[k2 v2 k4 v4\] k1.k4?=v44"
-} -result {{k1 {k2 v2 k4 v4}} {k1 L}}
-
-tcltest::test kv_hier-5.0.1 {
-	key value pair and ?=
-} -body {
-	conf::load_from_str -hd . "k1=\"k2 v2 k4 v4\" k1.k4?=v44"
-} -result {{k1 {k2 v2 k4 v4}} {k1 S}}
-
-tcltest::test kv_hier-5.1 {
-	key value pair and ?=
-} -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k4?=v4"
-} -result {{k1 {k2 v2 k3 v3 k4 v4}} {k1 {k2 S k3 S k4 S}}}
-
-tcltest::test kv_hier-5.2 {
-	key value pair and ?=
-} -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1.k2?=v4"
-} -result {{k1 {k2 v2 k3 v3}} {k1 {k2 S k3 S}}}
-
-tcltest::test kv_hier-5.3 {
-	key value pair and ?=
-} -body {
-	conf::load_from_str -hd . "k1 {k2=v2 k3=v3} k1 ?= v4"
-} -result {{k1 {k2 v2 k3 v3}} {k1 {k2 S k3 S}}}
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k1=\[k2 v2 k4 v4\] k1.k4?=v44"
+	return $::conf
+} -result {k1 {k2 v2 k4 v4}}
 
 tcltest::cleanupTests

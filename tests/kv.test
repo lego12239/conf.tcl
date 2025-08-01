@@ -2,166 +2,228 @@ lappend auto_path [pwd]/../
 package require tcltest
 package require conf
 
+proc cb-1.0 {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	if {$op ne "SECT_CH"} {
+		dict set conf {*}$kname $kval
+	}
+}
+
 tcltest::test kv-1.0 {
 	simple key value pair
 } -body {
-	conf::load_from_str "k1=v1"
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k1=v1"
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-1.1 {
 	simple key value pair
 } -body {
-	conf::load_from_str " k1=v1"
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} " k1=v1"
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-1.2 {
 	simple key value pair
 } -body {
-	conf::load_from_str " k1 =v1"
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} " k1 =v1"
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-1.3 {
 	simple key value pair
 } -body {
-	conf::load_from_str " k1 = v1"
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} " k1 = v1"
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-1.4 {
 	simple key value pair
 } -body {
-	conf::load_from_str " k1 = v1 "
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} " k1 = v1 "
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-1.5 {
 	simple key value pair
 } -body {
-	conf::load_from_str "  k1   =  v1   "
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "  k1   =  v1   "
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-1.6 {
 	simple key value pair
 } -body {
-	conf::load_from_str "  k1   =  v1\n"
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "  k1   =  v1\n"
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-1.7 {
 	simple key value pair
 } -body {
-	conf::load_from_str "  k1   =  v1 \n   "
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "  k1   =  v1 \n   "
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-2.0 {
 	simple key value pair with newlines
 } -body {
-	conf::load_from_str "  k1   =  v1 \n \n\n  \n  "
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "  k1   =  v1 \n \n\n  \n  "
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-2.1 {
 	simple key value pair with newlines
 } -body {
-	conf::load_from_str "\n  k1   =  v1 \n \n\n  \n  "
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "\n  k1   =  v1 \n \n\n  \n  "
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-2.2 {
 	simple key value pair with newlines
 } -body {
-	conf::load_from_str "\n  k1 \n  =  v1 \n \n\n  \n  "
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf}  "\n  k1 \n  =  v1 \n \n\n  \n  "
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-2.3 {
 	simple key value pair with newlines
 } -body {
-	conf::load_from_str "\n  k1 \n  =\n  v1 \n \n\n  \n  "
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "\n  k1 \n  =\n  v1 \n \n\n  \n  "
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-3.0 {
 	simple key value pair with wrong chars(")
 } -body {
-	conf::load_from_str "k\"1  =  v1"
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k\"1  =  v1"
+	return $::conf
 } -returnCodes error -result "conf error at STR:1: Possible unclosed quotes at line 1. Unexpected token sequence: \"'k'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.1 {
 	simple key value pair with wrong chars([)
 } -body {
-	conf::load_from_str "k\[1  =  v1"
-} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) '\['#4(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k\[1  =  v1"
+	return $::conf
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '1  =  v1'. Unexpected token sequence: \"'k'#6(L1) '\['#4(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.2 {
 	simple key value pair with wrong chars(])
 } -body {
-	conf::load_from_str "k\]1  =  v1"
-} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) ']'#5(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k\]1  =  v1"
+	return $::conf
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '1  =  v1'. Unexpected token sequence: \"'k'#6(L1) ']'#5(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.3 "
 	simple key value pair with wrong chars({)
 " -body {
-	conf::load_from_str "k 1 \{  =  v1"
-} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) '1'#6(L1) '{'#2(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k 1 \{  =  v1"
+	return $::conf
+} -returnCodes error -result "conf error at STR:1: Token input buffer: ' {  =  v1'. Unexpected token sequence: \"'k'#6(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.4 "
 	simple key value pair with wrong chars(})
 " -body {
-	conf::load_from_str "k\}1  =  v1"
-} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) '}'#3(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k\}1  =  v1"
+	return $::conf
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '1  =  v1'. Unexpected token sequence: \"'k'#6(L1) '}'#3(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.5 {
 	simple key value pair with wrong chars( )
 } -body {
-	conf::load_from_str "k 1  =  v1"
-} -returnCodes error -result "conf error at STR:1: Token input buffer: '  v1'. Unexpected token sequence: \"'k'#6(L1) '1'#6(L1) '='#1(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k 1  =  v1"
+	return $::conf
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '  =  v1'. Unexpected token sequence: \"'k'#6(L1) '1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-3.6 {
 	simple key value pair with wrong chars(=)
 } -body {
-	conf::load_from_str "k=1  =  v1"
-} -returnCodes error -result "conf error at STR:1: Unexpected token sequence: \"'='#1(L1) 'v1'#6(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k=1  =  v1"
+	return $::conf
+} -returnCodes error -result "conf error at STR:1: Token input buffer: '  v1'. Unexpected token sequence: \"'='#1(L1)\". Want: KEY = VAL or KEY = \[ or GROUP_NAME { or } or \[GROUP_NAME]"
 
 tcltest::test kv-4.0 {
 	simple key value pair with quotes
 } -body {
-	conf::load_from_str "k1= \"v1\""
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k1= \"v1\""
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-4.1 {
 	simple key value pair with quotes
 } -body {
-	conf::load_from_str "k1= \"v1\"  "
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k1= \"v1\"  "
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test kv-4.2 {
 	simple key value pair with quotes
 } -body {
-	conf::load_from_str "k1= \"v1 \"  "
-} -result {{k1 {v1 }} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k1= \"v1 \"  "
+	return $::conf
+} -result {k1 {v1 }}
 
 tcltest::test kv-4.3 {
 	simple key value pair with quotes
 } -body {
-	conf::load_from_str "k1= \" v1 \"  "
-} -result {{k1 { v1 }} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k1= \" v1 \"  "
+	return $::conf
+} -result {k1 { v1 }}
 
 tcltest::test kv-4.4 {
 	simple key value pair with quotes
 } -body {
-	conf::load_from_str "k1= \"  v1   \"  "
-} -result {{k1 {  v1   }} {k1 S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k1= \"  v1   \"  "
+	return $::conf
+} -result {k1 {  v1   }}
 
 tcltest::test kv-4.5 {
 	simple key value pair with quotes
 } -body {
-	conf::load_from_str "\" k1\"= \"  v1   \"  "
-} -result {{{ k1} {  v1   }} {{ k1} S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "\" k1\"= \"  v1   \"  "
+	return $::conf
+} -result {{ k1} {  v1   }}
 
 tcltest::test kv-4.6 {
 	simple key value pair with quotes
 } -body {
-	conf::load_from_str "\" k1  \"= \"  v1   \"  "
-} -result {{{ k1  } {  v1   }} {{ k1  } S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "\" k1  \"= \"  v1   \"  "
+	return $::conf
+} -result {{ k1  } {  v1   }}
 
 tcltest::test kv-4.7 {
 	simple key value pair with quotes
 } -body {
-	conf::load_from_str "\" k1  \" = \"  v1   \"  "
-} -result {{{ k1  } {  v1   }} {{ k1  } S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "\" k1  \" = \"  v1   \"  "
+	return $::conf
+} -result {{ k1  } {  v1   }}
 
 tcltest::cleanupTests

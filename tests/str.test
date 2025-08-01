@@ -2,52 +2,98 @@ lappend auto_path [pwd]/../
 package require tcltest
 package require conf
 
+proc cb-1.0 {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	switch $op {
+	=S -
+	=L {
+		dict set conf {*}$kname $kval
+	}
+	+=S {
+		if {[dict exists $conf {*}$kname]} {
+			set val [dict get $conf {*}$kname]
+		} else {
+			set val ""
+		}
+		append val $kval
+		dict set conf {*}$kname $val
+	}
+	+=L {
+		if {[dict exists $conf {*}$kname]} {
+			set val [dict get $conf {*}$kname]
+		} else {
+			set val ""
+		}
+		lappend val {*}$kval
+		dict set conf {*}$kname $val
+	}
+	"SECT_CH" -
+	F {
+	}
+	}
+}
+
 tcltest::test str-1.0 {
 	opt -s
 } -body {
-	conf::load_from_str -s 5 "k1=v1 k2=v2"
-} -result {{k2 v2} {k2 S}}
+	set ::conf ""
+	conf::load_from_str -s 5 {cb-1.0 ::conf} "k1=v1 k2=v2"
+	return $::conf
+} -result {k2 v2}
 
 tcltest::test str-1.1 {
 	opt -s
 } -body {
-	conf::load_from_str -s 6 "k1=v1 k2=v2"
-} -result {{k2 v2} {k2 S}}
+	set ::conf ""
+	conf::load_from_str -s 6 {cb-1.0 ::conf} "k1=v1 k2=v2"
+	return $::conf
+} -result {k2 v2}
 
 tcltest::test str-1.2 {
 	opt -s
 } -body {
-	conf::load_from_str -s 7 "k1=v1 k2=v2"
-} -result {{2 v2} {2 S}}
+	set ::conf ""
+	conf::load_from_str -s 7 {cb-1.0 ::conf} "k1=v1 k2=v2"
+	return $::conf
+} -result {2 v2}
 
 tcltest::test str-2.0 {
 	opt -e
 } -body {
-	conf::load_from_str -e 3 "k1=v1 k2=v2"
-} -result {{k1 v} {k1 S}}
+	set ::conf ""
+	conf::load_from_str -e 3 {cb-1.0 ::conf} "k1=v1 k2=v2"
+	return $::conf
+} -result {k1 v}
 
 tcltest::test str-2.1 {
 	opt -e
 } -body {
-	conf::load_from_str -e 4 "k1=v1 k2=v2"
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str -e 4 {cb-1.0 ::conf} "k1=v1 k2=v2"
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test str-2.2 {
 	opt -e
 } -body {
-	conf::load_from_str -e 5 "k1=v1 k2=v2"
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str -e 5 {cb-1.0 ::conf} "k1=v1 k2=v2"
+	return $::conf
+} -result {k1 v1}
 
 tcltest::test str-3.0 {
 	-s > -e
 } -body {
-	conf::load_from_str -s 6 -e 5 "k1=v1 k2=v2"
+	conf::load_from_str -s 6 -e 5 cb-1.0 "k1=v1 k2=v2"
 } -returnCodes error -result "-e is less than -s"
 
 tcltest::test str-4.2 {
 	opt -e
 } -body {
-	conf::load_from_str -e 5 "k1=v1 k2=v2"
-} -result {{k1 v1} {k1 S}}
+	set ::conf ""
+	conf::load_from_str -e 5 {cb-1.0 ::conf} "k1=v1 k2=v2"
+	return $::conf
+} -result {k1 v1}
 
 tcltest::cleanupTests

@@ -2,10 +2,43 @@ lappend auto_path [pwd]/../
 package require tcltest
 package require conf
 
+proc cb-1.0 {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	switch $op {
+	=S -
+	=L {
+		dict set conf {*}$kname $kval
+	}
+	+=S {
+		if {[dict exists $conf {*}$kname]} {
+			set val [dict get $conf {*}$kname]
+		} else {
+			set val ""
+		}
+		append val $kval
+		dict set conf {*}$kname $val
+	}
+	+=L {
+		if {[dict exists $conf {*}$kname]} {
+			set val [dict get $conf {*}$kname]
+		} else {
+			set val ""
+		}
+		lappend val {*}$kval
+		dict set conf {*}$kname $val
+	}
+	"SECT_CH" -
+	F {
+	}
+	}
+}
+
 tcltest::test mix-1.0 {
 	mix
 } -body {
-	conf::load_from_str "
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "
 	k=v
 	\[a.b\]
 	k1=v1
@@ -19,12 +52,14 @@ tcltest::test mix-1.0 {
 	  k5=v5
 	\}
 	k6=v6"
-} -result {{k v a.b {k1 v1} l1.l2 {k2 v2 c.d {k3 v3} l3.l4 {k4 v4} k5 v5} k6 v6} {k S a.b {k1 S} l1.l2 {k2 S c.d {k3 S} l3.l4 {k4 S} k5 S} k6 S}}
+	return $::conf
+} -result {k v a.b {k1 v1} l1.l2 {k2 v2 c.d {k3 v3} l3.l4 {k4 v4} k5 v5} k6 v6}
 
 tcltest::test mix-2.0 {
 	mix
 } -body {
-	conf::load_from_str -hd . "
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "
 	k=v
 	\[a.b\]
 	k1=v1
@@ -38,12 +73,14 @@ tcltest::test mix-2.0 {
 	  k5=v5
 	\}
 	k6=v6"
-} -result {{k v a {b {k1 v1}} l1 {l2 {k2 v2 c {d {k3 v3}} l3 {l4 {k4 v4}} k5 v5}} k6 v6} {k S a {b {k1 S}} l1 {l2 {k2 S c {d {k3 S}} l3 {l4 {k4 S}} k5 S}} k6 S}}
+	return $::conf
+} -result {k v a {b {k1 v1}} l1 {l2 {k2 v2 c {d {k3 v3}} l3 {l4 {k4 v4}} k5 v5}} k6 v6}
 
 tcltest::test mix-3.0 {
 	mix
 } -body {
-	conf::load_from_str -hd . "
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "
 	k=v
 	\[a.b\]
 	k1=v1
@@ -65,6 +102,7 @@ tcltest::test mix-3.0 {
 	  k9=v9
 	\}
 	k10=v10"
-} -result {{k v a {b {k1 v1} c {k2 v2}} d {e {k3 v3}} l1 {l2 {k4 v4 f {g {k5 v5} h {k6 v6}} i {j {k7 v7}} l3 {l4 {k8 v8}} k9 v9}} k10 v10} {k S a {b {k1 S} c {k2 S}} d {e {k3 S}} l1 {l2 {k4 S f {g {k5 S} h {k6 S}} i {j {k7 S}} l3 {l4 {k8 S}} k9 S}} k10 S}}
+	return $::conf
+} -result {k v a {b {k1 v1} c {k2 v2}} d {e {k3 v3}} l1 {l2 {k4 v4 f {g {k5 v5} h {k6 v6}} i {j {k7 v7}} l3 {l4 {k8 v8}} k9 v9}} k10 v10}
 
 tcltest::cleanupTests

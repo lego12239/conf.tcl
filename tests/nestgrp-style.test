@@ -2,52 +2,95 @@ lappend auto_path [pwd]/../
 package require tcltest
 package require conf
 
+proc cb-1.0 {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	switch $op {
+	=S -
+	=L {
+		dict set conf {*}$kname $kval
+	}
+	+=S {
+		if {[dict exists $conf {*}$kname]} {
+			set val [dict get $conf {*}$kname]
+		} else {
+			set val ""
+		}
+		append val $kval
+		dict set conf {*}$kname $val
+	}
+	+=L {
+		if {[dict exists $conf {*}$kname]} {
+			set val [dict get $conf {*}$kname]
+		} else {
+			set val ""
+		}
+		lappend val {*}$kval
+		dict set conf {*}$kname $val
+	}
+	"SECT_CH" -
+	F {
+	}
+	}
+}
+
 tcltest::test nestgrp-1.0 {
 	parameter without a group
 } -body {
-	conf::load_from_str "k=v"
-} -result {{k v} {k S}}
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k=v"
+	return $::conf
+} -result {k v}
 
 tcltest::test nestgrp-2.0 {
 	parameter without a group and with a group
 } -body {
-	conf::load_from_str "k=v
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k=v
 	grp.one\{
 	k=v\}"
-} -result {{k v grp.one {k v}} {k S grp.one {k S}}}
+	return $::conf
+} -result {k v grp.one {k v}}
 
 tcltest::test nestgrp-2.1 {
 	parameter without a group and with a group(with hd)
 } -body {
-	conf::load_from_str -hd . "k=v
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k=v
 	grp.one\{
 	k=v\}"
-} -result {{k v grp {one {k v}}} {k S grp {one {k S}}}}
+	return $::conf
+} -result {k v grp {one {k v}}}
 
 tcltest::test nestgrp-3.0 {
 	parameter within a nested group
 } -body {
-	conf::load_from_str "k=v
+	set ::conf ""
+	conf::load_from_str {cb-1.0 ::conf} "k=v
 	grp.one\{
 	k=v
 	another.grp \{
 	k=v\}\}"
-} -result {{k v grp.one {k v another.grp {k v}}} {k S grp.one {k S another.grp {k S}}}}
+	return $::conf
+} -result {k v grp.one {k v another.grp {k v}}}
 
 tcltest::test nestgrp-3.1 {
 	parameter within a nested group(with hd)
 } -body {
-	conf::load_from_str -hd . "k=v
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k=v
 	grp.one\{
 	k=v
 	another.grp \{
 	k=v\}\}"
-} -result {{k v grp {one {k v another {grp {k v}}}}} {k S grp {one {k S another {grp {k S}}}}}}
+	return $::conf
+} -result {k v grp {one {k v another {grp {k v}}}}}
 
 tcltest::test nestgrp-4.0 {
 	parameter within a nested group(with hd)
 } -body {
-	conf::load_from_str -hd . "k=v
+	set ::conf ""
+	conf::load_from_str -hd . {cb-1.0 ::conf} "k=v
 	grp.one.k=q
 	grp.one.k1=v1
 	grp.one\{
@@ -56,6 +99,7 @@ tcltest::test nestgrp-4.0 {
 	another.grp \{
 	k=v
 	d.e.f=g\}\}"
-} -result {{k v grp {one {k w k1 v1 a {b c} another {grp {k v d {e {f g}}}}}}} {k S grp {one {k S k1 S a {b S} another {grp {k S d {e {f S}}}}}}}}
+	return $::conf
+} -result {k v grp {one {k w k1 v1 a {b c} another {grp {k v d {e {f g}}}}}}}
 
 tcltest::cleanupTests
