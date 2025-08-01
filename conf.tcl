@@ -786,7 +786,7 @@ proc _get_tok {_ctx} {
 	if {$tok == 7} {
 		set str [string range [lindex $mstr 0] 1 end-1]
 		regsub -all {\\(.)} $str {\1} str
-		# Remove this to represent string with 7.
+		# Remove the next line to represent string with 7.
 		set tok 6
 	} else {
 		set str [lindex $mstr 0]
