@@ -11,7 +11,7 @@ tcltest::test file-1.0 {
 proc cb-2.0 {_conf _ctx op kname kval} {
 	upvar #0 $_conf conf
 
-	if {$op ne "SECT_CH"} {
+	if {($op ne "SECT_CH") && ($op ne "FILE")} {
 		dict set conf {*}$kname $kval
 	}
 }
@@ -73,5 +73,60 @@ tcltest::test file-4.4 {
 	conf::load_from_file -hd . -path incl {cb-2.0 ::conf} test_incl.6.conf
 	return $::conf
 } -result {k v gg {p1 V1 p2 V2 p3 V3 p4 V4 p5 V5 s1 {p6 V6} p7 V7} k5 v5}
+
+proc cb-3.0 {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	switch $op {
+	=S {
+		dict set conf data {*}$kname $kval
+	}
+	FILE {
+		dict lappend conf files $kname
+		if {$kname eq "incl/test_incl.5.1.conf"} {
+			dict set conf got 1
+			if {[dict get $conf data k] ne "v"} {
+				error "k must be equal to v"
+			}
+			if {[dict exists $conf data g1 k2]} {
+				error "k2 has not yet been defined"
+			}
+		}
+	}
+	}
+}
+
+tcltest::test file-5.0 {
+	FILE cb op
+} -body {
+	set ::conf ""
+	conf::load_from_file -hd . -path incl {cb-3.0 ::conf} test_incl.5.conf
+	if {![dict exists $::conf got]} {
+		error "Can't got a file"
+	}
+	return [dict get $::conf files]
+} -result {incl/test_incl.5.1.conf incl/test_incl.5.2.conf}
+
+proc cb-3.1 {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	switch $op {
+	=S {
+		dict set conf data {*}$kname $kval
+	}
+	FILE {
+		dict lappend conf files $kname
+	}
+	}
+}
+
+tcltest::test file-5.1 {
+	FILE cb op
+} -body {
+	set ::conf ""
+	conf::load_from_file -hd . -path incl {cb-3.1 ::conf} test_incl.6.conf
+	return [dict get $::conf files]
+} -result {incl/test_incl.6.1.conf incl/test_incl.6.2.conf incl/test_incl.6.3.conf}
+
 
 tcltest::cleanupTests
