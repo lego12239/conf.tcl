@@ -460,6 +460,8 @@ proc _parse_file_inclusion {_ctx fmask} {
 #	puts "DBG _parse_file_inclusion: $ctx"
 	set fnames [lsort [glob -directory [dict get $ctx prms -path] $fmask]]
 	foreach fname $fnames {
+		{*}[dict get $ctx cb] ctx "FILE" $fname ""
+
 		set fh [open $fname]
 		set src [dict create\
 		  name "$fname"\
