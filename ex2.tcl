@@ -5,26 +5,16 @@
 lappend auto_path [pwd]
 package require conf
 
-set cspec_pat {key1 S sect1 {sect2 {key1 c key2 S}} sect3 A}
-set cas [conf::load_from_file -hd . ex.conf]
-set res [conf::spec_cmp $cspec_pat [lindex $cas 1]]
-if {[llength $res] > 0} {
-	foreach mentry $res {
-		switch -exact [lindex $mentry 0] {
-		"M" {
-			puts "missed: \"[lindex $mentry 1]\""
-		}
-		"T" {
-			set wtype [conf::spec_key_get $cspec_pat [lindex $mentry 1]]
-			set type [conf::spec_key_get [lindex $cas 1] [lindex $mentry 1]]
-			puts "wrong type: \"[lindex $mentry 1]\": $type instead of $wtype"
-		}
-		"E" {
-			puts "excess: \"[lindex $mentry 1]\""
-		}
-		}
+set conf {}
+
+proc conf_cb {_conf _ctx op kname kval} {
+	upvar #0 $_conf conf
+
+	if {($op ne "SECT_CH") && ($op ne "FILE")} {
+		dict set conf {*}$kname $kval
 	}
-	exit 1
 }
-# We should not reach this line
-puts [dict get [lindex $cas 0] sect1 sect2 key1]
+
+#conf::load_from_file -hd . {conf_cb conf} ex2.conf
+conf::load_from_file -hd . {conf_cb conf} m.conf
+puts $conf
