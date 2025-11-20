@@ -1,6 +1,7 @@
 #!/usr/bin/env tclsh
-# Conf spec mismatch to conf spec pattern.
-# Example of outputing of comparison results.
+# very simple callback that skip SECT_CH and FILE op and
+# treat += and ?= op as = and in all these cases simply assign
+# a value to a key.
 
 lappend auto_path [pwd]
 package require conf
