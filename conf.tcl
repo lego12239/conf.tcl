@@ -28,12 +28,12 @@ namespace eval conf {
 #
 #   CALLBACK
 #       CALLBACK is a proc name or a list - {CALLBACK ARG1 ...}. This callback
-#       is called on every parsed key-value and section enter/leave. It is
-#       called with specified arguments and appended context variable name,
-#       the operation, a full key name, a value.
+#       is called on every parsed key-value, section enter/leave and file
+#       inclusion. It is called with specified arguments and appended context
+#       variable name, the operation, a full key name, a value.
 #       Callback last parameters must be:
 #       - ctx var name
-#       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
+#       - operation (=S, =L, +=S, +=L, ?=S, ?=L, SECT_CH or FILE)
 #       - key full name(list with sect names and a key name)
 #       - value
 #   FILE_NAME
@@ -79,12 +79,12 @@ proc load_from_file {args} {
 #
 #   CALLBACK
 #       CALLBACK is a proc name or a list - {CALLBACK ARG1 ...}. This callback
-#       is called on every parsed key-value and section enter/leave. It is
-#       called with specified arguments and appended context variable name,
-#       the operation, a full key name, a value.
+#       is called on every parsed key-value, section enter/leave and file
+#       inclusion. It is called with specified arguments and appended context
+#       variable name, the operation, a full key name, a value.
 #       Callback last parameters must be:
 #       - ctx var name
-#       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
+#       - operation (=S, =L, +=S, +=L, ?=S, ?=L, SECT_CH or FILE)
 #       - key full name(list with sect names and a key name)
 #       - value
 #   CHAN
@@ -126,12 +126,12 @@ proc load_from_fh {args} {
 #
 #   CALLBACK
 #       CALLBACK is a proc name or a list - {CALLBACK ARG1 ...}. This callback
-#       is called on every parsed key-value and section enter/leave. It is
-#       called with specified arguments and appended context variable name,
-#       the operation, a full key name, a value.
+#       is called on every parsed key-value, section enter/leave and file
+#       inclusion. It is called with specified arguments and appended context
+#       variable name, the operation, a full key name, a value.
 #       Callback last parameters must be:
 #       - ctx var name
-#       - operation (=S, =L, +=S, +=L, ?=S or ?=L)
+#       - operation (=S, =L, +=S, +=L, ?=S, ?=L, SECT_CH or FILE)
 #       - key full name(list with sect names and a key name)
 #       - value
 #   CONF_STR
