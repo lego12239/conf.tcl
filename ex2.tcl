@@ -16,6 +16,5 @@ proc conf_cb {_conf _ctx op kname kval} {
 	}
 }
 
-#conf::load_from_file -hd . {conf_cb conf} ex2.conf
-conf::load_from_file -hd . {conf_cb conf} m.conf
+conf::load_from_file -hd . {conf_cb conf} ex2.conf
 puts $conf
