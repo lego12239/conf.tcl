@@ -569,9 +569,7 @@ proc _sect_push {_ctx type name} {
 	if {[lindex [dict get $ctx sect_type] end] == 0} {
 		_sect_pop ctx 0
 	}
-	set sect [lindex [dict get $ctx sect] end]
-	lappend sect {*}[_mk_name ctx $name]
-	dict lappend ctx sect $sect
+	dict lappend ctx sect [_mk_name ctx $name]
 	dict lappend ctx sect_type $type
 }
 
@@ -604,7 +602,11 @@ proc _sect_pop {_ctx type} {
 proc _sect_get {_ctx} {
 	upvar $_ctx ctx
 
-	return [join [lindex [dict get $ctx sect] end]]
+	set sname {}
+	foreach s1 [dict get $ctx sect] {
+		lappend sname {*}$s1
+	}
+	return $sname
 }
 
 proc _cb_call {_ctx op kname kval} {
