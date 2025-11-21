@@ -1,15 +1,20 @@
-- add save routines
-- add spec param to save routines? spec will be used to specifying nested levels and
-  values types.
 - check ret val after while from _toks_get inside _parse. If it is equal to -1,
   then throw an error(may be after this we can remove a part of error related
   code from _load proc).
-- add boolean support(yes/no, true/false, enable/disable without quotes).(Already
-  exists?)
 - add .= ?
 - add ?.= or .?= ?
 - add conf_get.tcl utility for getting a value of a specified key(on command line).
   It can be used from shell scripts, for example.
 - replace CONFERR in error calls with something like {CONF ...}?
 - add multiline value support?
+  (add \\n (\ followed by newline) support for line continuation)
 - autotests for += without previous =
+- autotests for SECT_CH
+- fix err with "Token input buffer". Place it after "Unexpected token sequence".
+- remove debug info from "Unexpected token sequence" msg?
+- rename SECT_CH to CS?
+- autotest for += and ?=
+- is value should last till the line end even in the absence of quotes? Like:
+  key = some long value
+- add mandatory comma for list items separation? It seems, that this can
+  improve readability of lists for users.
