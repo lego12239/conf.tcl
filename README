@@ -1,5 +1,5 @@
-Overview
-=======
+OVERVIEW
+========
 
 conf package is pure-tcl package for loading a textual configuration data from
 file, channels and strings. It supports conf syntax with hierarchical and
@@ -10,13 +10,8 @@ The features are:
 * conf syntax: ini-style sections support
 * conf syntax: comments support
 * conf syntax: file inclusion support
-* callback can be used on every key-value assignment to change a default behaviour
-  drastically(you can use a package only as a parser and process a parsed
-  key-value as you want even without a creation of resulting dict with a parsed conf)
-* conf is parsed into 2 dicts: one is a parsed conf and another is a conf
-  specification with info about value types. This is very important for working
-  with parsed conf correctly. See Rationale section in the README.
-* there are utility routines to help with conf spec checking.
+* callback based parsing: callback is called on every key-value assignment,
+  section change and file inclusion
 
 conf package contains 3 main routines for text configuration file loading:
 * conf::load_from_file - to load a conf from a file
@@ -24,116 +19,79 @@ conf package contains 3 main routines for text configuration file loading:
 * conf::load_from_str - to load a conf from a string
 
 And the next utility routines:
-* conf::get_key - get a specified key from a parsed conf
 * conf::escape_value - escape a specified value according to conf syntax rules
-* conf::spec_key_existence - return key existence state
-* conf::spec_cmp - compare a cspec against a reference cspec
-* conf::spec_key_get - get a value of a specified key
 
-Synopsis
+
+SYNOPSIS
 ========
 
-  load_from_file ?-hd STR? ?-default CAS? ?-path STR? ?-cb CB_AND_PRIV?
-                 FILE_NAME
-  load_from_fh ?-hd STR? ?-default CAS? ?-path STR? ?-cb CB_AND_PRIV? CHAN
-  load_from_str ?-hd STR? ?-default CAS? ?-path STR? ?-cb CB_AND_PRIV?
+  load_from_file ?-hd STR? ?-path STR? CALLBACK FILE_NAME
+  load_from_fh ?-hd STR? ?-path STR? CALLBACK CHAN
+  load_from_str ?-hd STR? ?-path STR? CALLBACK
                 ?-s START_INDEX? ?-e END_INDEX? CONF_STR
-  get_key CAS NAME ?TYPE?
   escape_value VALUE
-  spec_key_existence CSPEC_OR_PATTERN NAMES ?_OUT?
-  spec_cmp CSPEC_OR_PATTERN CSPEC
-  spec_key_get CSPEC_OR_PATTERN NAMES
 
-Description
+
+DESCRIPTION
 ===========
 
-  load_from_file command parse a specified file and returns a result as a
-  list. Where:
-  - element #1 is a dict with a parsed conf
-  - element #2 is a dict with a conf specification for a parsed conf
-  - element #3 (exists only if -cb is used) is callback private data
+  load_from_file command parse a specified file and calls a specified callback
+  on every parsed key-value, section start/end and file inclusion.
   This command accepts the next options:
   -hd STR
-      use STR as hierarchy delimiter in key names and group names
-  -default CAS
-      use CAS(list with 2 elements: parsed conf and its spec) as an
-      initial(default) conf.
+      use STR as hierarchy delimiter in key names and group names.
+      By default, there is no hierarchy delimiter.
   -path STR
-      use STR as file path prefix for every included file
-  -cb CB_AND_PRIV
-      CB_AND_PRIV is a list: {CALLBACK PRIV}. Use specified CALLBACK
-      proc as value set/append callback; and specified PRIV will be
-      used as initial value for priv in a context.
+      use STR as file path prefix for every included file.
+      By default, "./".
 
-  load_from_fh command parse a data from a specified file handle(chan) and
-  returns the same value as load_from_file. Options are the same as for
-  load_from_file.
+  And 2 mandatory arguments:
+  CALLBACK
+      CALLBACK is a proc name or a list - {CALLBACK ARG1 ...}. This callback
+      is called on every parsed key-value, section enter/leave and
+      file inclusion.
+  FILE
+      A file name to parse.
+
+  load_from_fh works like a load_from_file proc and accepts the same options,
+  but parse a data from a specified file handle(chan) instead of file
+  specified by a name.
 
   load_from_str command parse a data from a specified string and
-  returns the same value as load_from_file. Options are the same as for
-  load_from_file with addition of:
+  calls a specified callback like a load_from_file proc.
+  Options are the same as for load_from_file with addition of:
   -s START_INDEX
       start parsing of a string from specified position(in chars)
   -e END_INDEX
       end parsing of a string at specified position(in chars); this will be
       the last character we read
 
-  get_key command find a specified key in a specified CAS(conf and its spec)
-  and returns a value of this key. CAS is a value returned from any of load
-  proc. Key is specified by list with names(e.g. {s1 s2 k1} for key k1 in
-  section s2 which resides in section s1). If a specified key isn't found,
-  then error is generated. Optionally, a key type(S for string or L for
-  list) can be specified; in this case, if a specified key has
-  a different type, then error is generated.
-
   escape_value command returns an escaped form(according to conf syntax
   rules) of specified value.
 
-  spec_key_existence command tries to find a specified key(NAMES) in a
-  specified conf spec or conf spec pattern(CSPEC) and returns a result(key
-  existence state). In addition, for some ret codes an additional data
-  saved in a specified variable(_OUT - a name of a var for this data).
-  This command returns:
-  -2 - specified key doesn't exists and some predecessor key is a leaf key;
-       $_out var contains existent part of key path(a part of names list)
-  -1 - specified key doesn't exists
-   0 - specified key exists and it is a leaf key
-       $_out var contains a value of a specified key
-   1 - specified key exists, but it is not a leaf key
 
-  spec_cmp command compares a specified cspec(CSPEC) against another cspec
-  or a cspec pattern(PATTERN) and returns a list with mismatch entries.
-  Mismatch entry is a list with 2 elements, where 1 item is a mismatch
-  type and 2 item is full path to a key:
-  {M KEY_PATH} - miss, KEY_PATH from pattern is missed from cspec
-  {T KEY_PATH} - wrong type, KEY_PATH from pattern is different type
-                 than in cspec
-  {E KEY_PATH} - excess, KEY_PATH from cspec is missed from pattern
-
-  spec_key_get command tries to find a specified key(NAMES) in a
-  specified conf spec or conf spec pattern and returns its value. If
-  a specified key isn't found, then spec_key_get returns "-"; if a
-  specified key is a section, then spec_key_get returns "sect". This
-  command mostly useful as utility proc for assisting in making an error
-  messages for user.
-
-
-Conf syntax
+CONF SYNTAX
 ===========
 
 Conf consists from key-value pairs, which can be grouped in sections.
 Whitespaces are ignored. Comment can be started by # symbols at almost any
 place(excluding # inside a quoted string) and lasts until the end of the
-line. Key, value and section name can
-consist of any chars exclude any space chars, '=', '#', '"', '[', ']', '{',
-'}', '+', '?'. If a key, value or section name contains any of these
-characters, then the entire key, value or section name must be enclosed in
-double quotes. In this case, if double quotes appears inside the value,
-it must be escaped with a backslash(\). Value can be a string(quoted or
-not) or a list. A list is started with '[' and is ended with ']'. List
-elements are separated with spaces.
+line.
 
-Assignment
+Key, value and section name can consist of any chars exclude any space
+chars, '=', '#', '"', '[', ']', '{', '}', '+', '?'. If a key, value or
+section name contains any of these characters, then the entire key, value
+or section name must be enclosed in double quotes. In this case, if double
+quotes appears inside the value, it must be escaped with a backslash(\).
+
+Value can be a string(quoted or not) or a list. A list is started with '['
+and is ended with ']'. List elements are separated with spaces. Each element
+of a list is a string or a list.
+
+Key, section and file inclusion must start on new line.
+
+
+ASSIGNMENT
 ----------
 
 Assignment a string to a key:
@@ -146,24 +104,24 @@ Assignment a list to a key:
 k1 = [v1 v2 v3]
 k2 = [v1 "some string \"with\" spaces" v2]
 
-Assignment a string/list to a key only if this key isn't defined yet:
+Assignment a list of lists to a key:
+
+k3 = [[v1 v2] [v3 v4] [v5 v6]]
+
+Also, ?= and += can be used for assignment:
 
 k1 ?= some_word
 k2 ?= [v1 v2]
 
-Append a string/list to a key value(if previous value is a string, then
-it is converted to a list where the previous value becomes the only
-element):
+k3 = v1
+k3 += some_word
+k3 += [v2 v3]
 
-k1 = v1
-k1 += some_word
-k1 += [v2 v3]
+?= can be used to assign a value only if this key isn't defined yet.
+And += can be used to append a value to existent one.
 
-the same as:
 
-k1 = [v1 some_word v2 v3]
-
-File including
+FILE INCLUDING
 --------------
 
 Conf file can include another conf files with syntax:
@@ -172,7 +130,8 @@ Conf file can include another conf files with syntax:
 
 Where FILENAME is glob pattern. Files are parsed in alphabetical order.
 
-Sections
+
+SECTIONS
 --------
 
 A section can be defined in two ways. With [] syntax:
@@ -232,11 +191,22 @@ sect1.sect2 {
 	key4 = val4
 }
 
+variant 5:
 
-Conf syntax ABNF
+sect1.sect2 {
+	key1 = val1
+	key2 = val2
+	key4 = val4
+	[sect3]
+	key3 = val3
+}
+
+
+CONF SYNTAX ABNF
 ================
 
-conf = *(key-value / section / include-stmt / WSP0)
+conf = (key-value / section / include-stmt / WSP0)
+       *(NL (key-value / section / include-stmt / WSP0))
 key-value = key ("=" / "+=" / "?=") (value / list)
 key = word / str
 value = word / str
@@ -251,91 +221,66 @@ str = WSP0 DQUOTE (%d01-d91 / %93-d255 / %d92 %d92 / %d92 DQUOTE) DQUOTE WSP0
         ; any chars in double quotes, where double quotes inside string
         ; can be escaped with \ char
 WSP0 = *WSP
-WSP = SP / HTAB / CR / LF / CRLF
+WSP = SP / HTAB / NL
+NL = CR / LF / CRLF
 
 
-Callback
+CALLBACK
 ========
 
-If -cb option is specified for any of load proc, then a specified callback
-proc is called on every parsed key and value from a conf. Callback must
-accept the next parameters in order:
-  - ctx var name
-  - conf var name
-  - operation (=S, =L, +=S, +=L, ?=S or ?=L)
-  - var name with key full name(list with sect names and a key name)
-  - value var name
+Callback is a proc name or a list with proc name and args like
+{PROC ARG1 ARG2 ...}. This callback is called on every parsed key-value,
+section enter/leave and file inclusion. It is called with specified arguments
+and appended context variable name, the operation, a full key name, a value.
+E.g. if callback is specified as {cb_proc privvar}, then callback must be
+define as:
 
-Where operation is "=S" for assigning a string, "=L" for assigning a list,
-"+=S" for adding a string, "+=L" for adding a list, "?=S" for assigning a
-string if no such key yet, "?=L" for assigning a list if no such key yet.
+proc cb_proc {privvarname _ctx op kname kval} {
+	upvar #0 $privvarname privvar
+	upvar $_ctx ctx
 
-Callback can change a key name and/or a key value. In this case, new key
-and/or value will be saved in a parsed conf dict.
-
-Callback must ret value type(S or L) or "" if value shouldn't be
-saved(we don't want it or we already saved it ourselves in a callback).
-In the last case, a value type info also isn't saved(into cspec).
-
-
-Conf specification
-==================
-
-A configuration specification("conf spec" or "cspec" to be short) is
-a data structure with data types info for parsed keys/values. cspec is
-returned from load_* proc together with a parsed conf. cspec and parsed
-conf are dicts. cspec purpose is to checking values types and key
-existence(the single conf by itself is insufficient for this - see
-Rationale). cspec contains the same keys as a conf. But values can be
-only "S" or "L". Where "S" means a string value and "L" means a list
-value. Thus, if your cspec dict has "S" value for some key, then
-corresponding parsed conf dict has a string value for the same key.
-E.g. for this conf, parsed with "-hd .":
-
-sect1.sect2 {
-	key1 = val1
-	key2 = val2
-	sect3 {
-		key3 = val3
-	}
-	key4 = val4
+...
 }
 
-The parsed conf will be the dict:
+Callback last parameters must be:
+  - ctx var name (parser internal structure, mostly you needn't it)
+  - operation (=S, =L, +=S, +=L, ?=S, ?=L, SECT_CH or FILE)
+  - key full name (list with a sect name and a key name)
+  - value
 
-sect1 {sect2 {key1 val1 key2 val2 sect3 {key3 val3} key4 val4}}
+Where operation is:
+- "=S" for assigning a string (e.g. k1 = v1)
+- "=L" for assigning a list (e.g. k1 = [v1 v2])
+- "+=S" for adding a string (e.g. k1 += v1)
+- "+=L" for adding a list (e.g. k1 += [v1 v2])
+- "?=S" for conditional assigning a string (e.g. k1 ?= v1)
+- "?=L" for conditional assigning a list (e.g. k1 ?= [v1 v2])
+- "SECT_CH" for section change
+- "FILE" for file inclusion
 
-And the cspec will be the dict:
+Callback with SECT_CH operation is called after the section is changed with
+one of:
+- [SECT_NAME]
+- SECT_NAME {
+- }
 
-sect1 {sect2 {key1 S key2 S sect3 {key3 S} key4 S}}
+key name argument in this case is a current section name.
 
-To simplify a work with cspec several routines exists: spec_key_existence,
-spec_cmp, spec_get_key.
+Callback with FILE operation is called for every file (if a file name pattern
+match more than one file) before file inclusion.
 
-
-Conf specification pattern
-==========================
-
-A configuration specification pattern("conf spec pattern" or
-"cspec pattern" to be short) is a data structure with data types info for
-parsed keys/values. When data type info can be actual data type or a
-data type pattern. cspec isn't returned from any proc - it's created by
-hands. cspec pattern purpose is to comparing cspec against it. This is
-simplify a procedure of checking values types and key existence after
-we parse a conf. spec_cmp proc is the main consumer of cspec pattern. The
-all syntax rules of cspec is also applies to cspec pattern with one
-additions: value can be not only "S" and "L", but also "A", "c", "C".
-Where:
-- "A" mean "S" or "L"
-- "c" mean any conf hierarchy
-- "C" mean any conf hierarchy or "S" or "L"
+A key full name is a list with a sect name and a key name. E.g.
+if we inside the section "s2", which inside the section "s1" (i.e. the
+current section full name is {s1 s2}), and the key name is "n1.n2" and
+-hd is ".", then key full name is {s1 s2 n1 n2}.
 
 
-Rationale
+RATIONALE
 =========
 
 Due to shimmering in tcl we can't reliably determine the type of a value in
-a parsed conf. For example, we expect the next conf:
+a parsed conf if we return just the dict from the parser. For example,
+we expect the next conf:
 
 n1 = VALUE
 
@@ -352,28 +297,51 @@ n1 {n2 VALUE}
 
 Which from our perspective has key n1 with value "n2 VALUE". If we do no
 acrobatics with ::tcl::unsupported::representation (it is unsupported,
-isn't it :-)?), then we can't differentiate these 2 cases. Due to
-implicit type convertion(shimmering) we can simplify a situation with data
-types to "our values without data types". Thus, we have a some conf with
-data types(section vs string vs list) and we have a dict with a parsed conf
-where no data types info attached to values. Therefore, in order not to lose
-data type info, we should parse a conf into 2 data structures: one is a
-parsed conf(with keys and values), another is a struct with data types info
-for parsed keys/values. The last structure is called conf specification(or
-cspec for short) in this package. Thus, any load_* proc return a list
-with these 2 structures after work: a dict with a parsed conf and a dict
-with a conf spec.
+isn't it :-)?), then we can't differentiate n1 key with value "n2 VALUE" from
+{n1 n2} key with value "VALUE".
 
-And workflow with some conf is like the next:
+To solve this problem we should get somehow types of values. And here we have
+2 possible solutions:
 
-- read a conf
-- compare a conf spec against a conf spec pattern
-- show some errors about mismatches
-- if no error, work with parsed conf as with usual dict
+1. return some dict with values types (sect/key) in addition to dict
+   with key-values
+2. use callback that called on every key-value pair (and thus we can clearly
+   distinguish between section and key, because at that point we have the
+   exact information about what is it)
+
+The first method is used in previous versions of conf package. The dict of
+values types - specification - was difficult to work with. And there was
+troubles to work with confs with not constant struct - e.g. a simple
+key-value can be replaced with extended section-values by a user:
+
+k1 = v1
+
+or
+
+k1 {
+  k1_sub1 = v1
+  k1_sub2 = v2
+}
+
+The second method is used in the current version of conf package. Although
+this method is more verbose compared to the first one (in some cases, where
+we need a small spec or need no spec at all), it is more understandable and
+more userfriendly. Also, we can do many interesting things with a callback,
+like a checking key/section redefinition or key/section case insensitivity.
 
 
 Examples
 ========
+
+The next callback is used for the all examples below:
+
+proc conf_cb {_conf _ctx op kname kval} {
+        upvar #0 $_conf conf
+
+        if {($op ne "SECT_CH") && ($op ne "FILE")} {
+                dict set conf {*}$kname $kval
+        }
+}
 
 Simple conf
 -----------
@@ -390,7 +358,7 @@ k4 = [
 	[inside list]
 	[for one key]]
 
-loaded with `load_from_file my.conf` give a conf:
+loaded with `load_from_file {conf_cb conf} my.conf` give a conf:
 
 k1 v1 k2 {val
 with
@@ -406,7 +374,7 @@ k2 = v2
 [g2]
 k3 = v3
 
-loaded with `load_from_file my.conf` give a conf:
+loaded with `load_from_file {conf_cb conf} my.conf` give a conf:
 
 k1 v1 g1 {k2 v2} g2 {k3 v3}
 
@@ -421,17 +389,17 @@ g1 {
   }
 }
 
-loaded with `load_from_file my.conf` give a conf:
+loaded with `load_from_file {conf_cb conf} my.conf` give a conf:
 
 k1 v1 g1 {k2 v2 g2 {k3 v3}}
 
 Conf with hierarchy delimiter specified
 ---------------------------------------
 
-g1.k1 = {1 2 3 {4 5}}
+g1.k1 = [1 2 3 [4 5]]
 g2.k2 = v2
 
-loaded with `load_from_file -hd . my.conf` give a conf:
+loaded with `load_from_file -hd . {conf_cb conf} my.conf` give a conf:
 
 g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2}
 
@@ -450,7 +418,7 @@ g4.g5 {
   k7.k8 = v7
 }
 
-loaded with `load_from_file -hd . my.conf` give a conf:
+loaded with `load_from_file -hd . {conf_cb conf} my.conf` give a conf:
 
 g1 {k1 {1 2 3 {4 5}}} g2 {k2 v2 k3 {k4 v3} g3 {k4 v4}} g4 {g5 {k5 {k6 v6} g7 {g8 {k7 {k8 v7}}}}}
 
@@ -466,41 +434,41 @@ k3 = # this is k3
 k4 = "v4 with # inside"
 # end of file
 
-loaded with `load_from_file -hd . my.conf` give a conf:
+loaded with `load_from_file -hd . {conf_cb conf} my.conf` give a conf:
 
 k v k1 v1 k2 v2 k3 v3 k4 {v4 with # inside}
 
-See ex*.tcl for examples of code.
+See ex*.tcl for examples of code:
+
+- ex1.tcl - just print callback parameters
+- ex2.tcl - very simple callback that skip SECT_CH and FILE op and
+            treat += and ?= op as = and in all these cases simply assign
+            a value to a key
+- ex3.tcl - ex2.tcl + overwrite checking
+- ex4.sh  - conf_get.tcl use from a shell script
 
 
 Errors
 ======
 
-conf error at m.conf:1: unexpected token sequence: "'k2'#6(L1) 'v2'#6(L1)". Want: KEY = VAL or KEY = [ or GROUP_NAME { or } or [GROUP_NAME]
+conf error at m.conf:1: Unexpected token sequence: "'k2'#6(L1) '='#1(L1) '{'#2(L1)". Want: KEY = VAL or KEY = [ or GROUP_NAME { or } or [GROUP_NAME]
 
 	There is parser error for token sequence started at line 1.
 	First token is 'k2' with token code 6 at line 1(L1),
-	second token is 'v2' with tokne code 6 at line 1. E.g.:
+	second token is '=' with token code 1 at line 1,
+	third token is '{' with token code 2 at line 1. i.e.:
+
+	k2 = {
+
+conf error at m.conf:1: Unexpected token sequence: "'k2'#6(L1) 'v2'#6(L1)". Want: KEY = VAL or KEY = [ or GROUP_NAME { or } or [GROUP_NAME]
+
+	Key with word instead of '=' or section with word instead of '{':
 
 	k2 v2
 
-conf error at m.conf:1: Possible unclosed quotes at line 1. unexpected token sequence: "'k2'#6(L1) '='#1(L1)". Want: KEY = VAL or KEY = [ or GROUP_NAME { or } or [GROUP_NAME]
+conf error at m.conf:1: Possible unclosed quotes at line 1. Unexpected token sequence: "'k2'#6(L1) '='#1(L1)". Want: KEY = VAL or KEY = [ or GROUP_NAME { or } or [GROUP_NAME]
 
 	Double quotes is opened, but is not closed. E.g.:
 
 	k2 = "v2
-
-Syntax error in cspec pattern for key 'k1': value is 'W'
-
-	If you call spec_cmp, then there is probably a misspelled key type in cspec pattern.
-	E.g.:
-
-    spec_cmp {k1 W} {k1 {k2 S}}
-
-Syntax error in cspec for key 'k1': value is 'W'
-
-	If you call spec_cmp, then there is probably a misspelled key type in cspec.
-	E.g.:
-
-    spec_cmp {k1 {k2 S}} {k1 W}
 
