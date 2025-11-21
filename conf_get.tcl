@@ -1,4 +1,5 @@
 #!/usr/bin/env tclsh
+# +=S - append a string
 
 lappend auto_path [pwd]
 package require conf
@@ -9,99 +10,75 @@ set conf_spec {}
 proc conf_cb {_conf _spec _ctx op kname kval} {
 	upvar #0 $_conf conf
 	upvar #0 $_spec spec
-	set kspec ""
 
-	set full_kname [join $kname .]
-	if {[dict exists $spec $full_kname]} {
-		set kspec [dict get $spec $full_kname]
-		set msg "Reassigning the "
-		switch $kspec {
-		S {
-			append msg "key $full_kname from string '[dict get $conf {*}$kname]' "
-		}
-		L {
-			append msg "key $full_kname from list '[dict get $conf {*}$kname]' "
-		}
-		SECT {
-			append msg "sect $full_kname "
-		}
-		}
-		switch $op {
-		=S {
-			append msg "to string '$kval'"
-		}
-		?=S -
-		+=S {
-			if {$kspec eq "SECT"} {
-				append msg "to string '$kval'"
+	if {($op ne "SECT_CH") && ($op ne "FILE")} {
+		set full_kname ""
+		for {set i 0} {$i < [llength $kname]} {incr i} {
+			set n [lindex $kname $i]
+			append full_kname ".$n"
+			if {$i == ([llength $kname] - 1)} {
+				set spec_val "S"
 			} else {
-				set msg ""
+				set spec_val "SECT"
 			}
-		}
-		=L {
-			append msg "to list '$kval'"
-		}
-		?=L -
-		+=L {
-			if {$kspec eq "SECT"} {
-				append msg "to list '$kval'"
+			if {[dict exists $spec $full_kname]} {
+				switch $spec_val {
+				SECT {
+					if {[dict get $spec $full_kname] ne $spec_val} {
+						error "[join $kname .] key try to overwrite [string range $full_kname 1 end] ([dict get $spec $full_kname])"
+					}
+				}
+				S {
+					if {([dict get $spec $full_kname] eq "SECT") ||
+					    ([dict get $spec $full_kname] ne [string index $op end])} {
+						error "[join $kname .] key try to overwrite [string range $full_kname 1 end] ([dict get $spec $full_kname])"
+					}
+				}
+				}
 			} else {
-				set msg ""
+				dict set spec $full_kname $spec_val
 			}
-		}
-		SECT {
-			append msg "to sect"
-		}
-		}
-		if {$msg ne ""} {
-			puts stderr $msg
 		}
 	}
 
 	switch $op {
 	=S {
-		dict set spec $full_kname S
 		dict set conf {*}$kname $kval
 	}
 	?=S {
-		if {($kspec eq "") || ($kspec eq "SECT")} {
-			dict set spec $full_kname S
+		if {![dict exists $conf {*}$kname]} {
 			dict set conf {*}$kname $kval
 		}
 	}
 	+=S {
-		if {($kspec eq "") || ($kspec eq "SECT")} {
-			set val ""
-			dict set spec $full_kname S
-		} else {
+		if {[dict exists $conf {*}$kname]} {
 			set val [dict get $conf {*}$kname]
-			dict set spec $full_kname L
-			lappend val $kval
+			append val $kval
+		} else {
+			set val $kval
 		}
 		dict set conf {*}$kname $val
 	}
 	=L {
-		dict set spec $full_kname L
 		dict set conf {*}$kname $kval
+		dict set spec $full_kname L
 	}
 	?=L {
-		if {($kspec eq "") || ($kspec eq "SECT")} {
-			dict set spec $full_kname L
+		if {![dict exists $conf {*}$kname]} {
 			dict set conf {*}$kname $kval
+			dict set spec $full_kname L
 		}
 	}
 	+=L {
-		if {($kspec eq "") || ($kspec eq "SECT")} {
-			set val ""
-		} else {
+		if {[dict exists $conf {*}$kname]} {
 			set val [dict get $conf {*}$kname]
+			lappend val $kval
+		} else {
+			set val $kval
 		}
-		dict set spec $full_kname L
-		lappend val $kval
 		dict set conf {*}$kname $val
 	}
 	SECT_CH {
-		dict set spec $full_kname SECT
 	}
 	F {
 	}
@@ -112,10 +89,10 @@ proc conf_cb {_conf _spec _ctx op kname kval} {
 }
 
 proc get_key {kname} {
-	if {![dict exists $::conf_spec $kname]} {
+	if {![dict exists $::conf_spec ".$kname"]} {
 		return {ERR "No such key"}
 	}
-	if {[dict get $::conf_spec $kname] eq "SECT"} {
+	if {[dict get $::conf_spec ".$kname"] eq "SECT"} {
 		return {ERR "This is a section"}
 	}
 	set names [split $kname .]
