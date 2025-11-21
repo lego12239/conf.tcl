@@ -1,1 +1,1 @@
-package ifneeded conf 0a20250705 [list source [file join $dir conf.tcl]]
+package ifneeded conf 2.0 [list source [file join $dir conf.tcl]]

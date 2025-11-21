@@ -919,5 +919,5 @@ proc escape_value {val} {
 }
 }
 
-package provide conf 0a20250705
+package provide conf 2.0
 
