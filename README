@@ -446,6 +446,7 @@ See ex*.tcl for examples of code:
             a value to a key
 - ex3.tcl - ex2.tcl + overwrite checking
 - ex4.sh  - conf_get.tcl use from a shell script
+- ex5.tcl - real config reading example
 
 
 Errors
