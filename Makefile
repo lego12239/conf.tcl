@@ -1,8 +1,15 @@
 VERSION := 2.1
 
 
+all:
+
 test:
 	cd tests && ./tests.tcl
+
+install:
+	install -d $(DESTDIR)/lib/conf
+	install conf.tcl pkgIndex.tcl $(DESTDIR)/lib/conf/
+	install -m 0555 conf_get.tcl $(DESTDIR)/bin/
 
 dist:
 	ln -s . conf-$(VERSION)
