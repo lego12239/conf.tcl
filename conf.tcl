@@ -358,7 +358,8 @@ proc __parse {_ctx} {
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 2]
 
 			_sect_push ctx 0 [_toks_data ctx 1]
-			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
+			_cb_call ctx "SECT_CH" "" ""
+#			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 3
 #			puts "sect: [dict get $ctx sect]"
 		}
@@ -370,7 +371,8 @@ proc __parse {_ctx} {
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 1]
 
 			_sect_push ctx 1 [_toks_data ctx 0]
-			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
+			_cb_call ctx "SECT_CH" "" ""
+#			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 2
 #			puts "sect: [dict get $ctx sect]"
 		}
@@ -378,7 +380,8 @@ proc __parse {_ctx} {
 			dict set ctx src lineno_prevexp_end [_toks_lineno_end ctx 0]
 
 			_sect_pop ctx 1
-			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
+			_cb_call ctx "SECT_CH" "" ""
+#			{*}[dict get $ctx cb] ctx "SECT_CH" [_sect_get ctx] ""
 			_toks_rm_head ctx 1
 #			puts "sect: [dict get $ctx sect]"
 		}
@@ -613,7 +616,9 @@ proc _cb_call {_ctx op kname kval} {
 	upvar $_ctx ctx
 
 	set names [_sect_get ctx]
-	lappend names {*}[_mk_name ctx $kname]
+	if {$op ne "SECT_CH"} {
+		lappend names {*}[_mk_name ctx $kname]
+	}
 	{*}[dict get $ctx cb] ctx $op $names $kval
 }
 
