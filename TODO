@@ -18,3 +18,4 @@
   key = some long value
 - add mandatory comma for list items separation? It seems, that this can
   improve readability of lists for users.
+- add to conf.tcl routine for checking key/group overwriting (from conf_get.tcl)?
