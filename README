@@ -20,6 +20,9 @@ conf package contains 3 main routines for text configuration file loading:
 
 And the next utility routines:
 * conf::escape_value - escape a specified value according to conf syntax rules
+* conf::kname_is_match KEYFULLNAME PATTERN _M
+* conf::kname_switch KEYFULLNAME {PATTERN BODY ?PATTERN BODY ...?}
+
 
 
 SYNOPSIS
@@ -79,7 +82,7 @@ DESCRIPTION
   name (prefixed with #) instead of name part where corresponding
   key name part is saved. E.g. key {users admin name} is match to pattern
   {users #uid name}; the string "admin" is saved into uid key of the dict
-  which name is specified in _m argument.
+  which name is specified in _M argument.
 
   kname_switch is like a switch statement. It evaluate specified script
   for matched kname. Each pattern is the same key name pattern as for
