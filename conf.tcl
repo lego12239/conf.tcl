@@ -922,6 +922,106 @@ proc escape_value {val} {
 	}
 	return "\"[regsub -all {"} $val {\\"}]\""
 }
+
+######################################################################
+# CONF KEY NAME ROUTINES
+######################################################################
+# Checks whether kname matches the pattern.
+# prms:
+#  kname    - a list with key full name
+#  pattern  - a list with pattern
+#  _m       - a variable name for saving of matched parts
+#
+# pattern is a list with key name parts (like a kname) that can contain
+# a variable name (prefixed with #) instead of name part where corresponding
+# key name part is saved. E.g. key {users admin name} is match to pattern
+# {users #uid name}; the string "admin" is saved into uid key of the dict
+# which name is specified in _m argument.
+#
+proc kname_is_match {kname pattern _m} {
+	upvar $_m m
+
+	if {[llength $kname] != [llength $pattern]} {
+		return 0
+	}
+
+	foreach knp $kname p $pattern {
+		if {[string index $p 0] eq "#"} {
+			dict set m [string range $p 1 end] $knp
+			continue
+		}
+		if {$knp ne $p} {
+			return 0
+		}
+	}
+
+	return 1
+}
+
+# Evaluate specified script for matched kname (like a switch statement).
+# SYNOPSIS:
+#   conf::kname_switch KEYFULLNAME {PATTERN BODY ?PATTERN BODY ...?}
+#
+# DESCRIPTION:
+#   KEYFULLNAME is a list with key full name.
+#   PATTERN is the same as for kname_is_match proc.
+#   BODY is a script to evaluate if a key is matched a corresponding pattern.
+#   BODY can be "-" to denote that body of the next pattern should be used
+#   for this pattern. If no pattern match the key, but there is a "default"
+#   last pattern, then its body will be used in this case.
+#
+proc kname_switch {kname branches} {
+	if {([llength $branches] % 2) != 0} {
+		return -code 1 -level 1 "extra kname_switch pattern with no body"
+	}
+
+	# Find a matched pattern.
+	for {set i 0} {$i < [llength $branches]} {incr i 2} {
+		set pattern [lindex $branches $i]
+		if {[kname_is_match $kname $pattern m]} {
+			dict for {k v} $m {
+				upvar $k var
+				set var $v
+			}
+			break
+		}
+	}
+
+	# Get a body for it.
+	if {$i < [llength $branches]} {
+		set body [lindex $branches $i+1]
+	} else {
+		# No match - try a default branch if any
+		if {[lindex $branches end-1] ne "default"} {
+			return
+		}
+		set pattern "default"
+		set body [lindex $branches end]
+	}
+	while {$body eq "-"} {
+		incr i 2
+		if {$i >= [llength $branches]} {
+			return -code 1 -level 1 "no body specified for pattern \"$pattern\""
+		}
+		set body [lindex $branches $i+1]
+	}
+
+	# Evaluate the body.
+	switch [set rcode [catch {uplevel $body} ret]] {
+	1 -
+	2 {
+		# error, return
+		return -code $rcode -level 1 $ret
+	}
+	3 {
+		# break
+		return
+	}
+	}
+	return $ret
+}
+
+
 }
 
 package provide conf 2.1.2
