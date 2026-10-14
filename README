@@ -25,11 +25,13 @@ And the next utility routines:
 SYNOPSIS
 ========
 
-  load_from_file ?-hd STR? ?-path STR? CALLBACK FILE_NAME
-  load_from_fh ?-hd STR? ?-path STR? CALLBACK CHAN
-  load_from_str ?-hd STR? ?-path STR? CALLBACK
+  conf::load_from_file ?-hd STR? ?-path STR? CALLBACK FILE_NAME
+  conf::load_from_fh ?-hd STR? ?-path STR? CALLBACK CHAN
+  conf::load_from_str ?-hd STR? ?-path STR? CALLBACK
                 ?-s START_INDEX? ?-e END_INDEX? CONF_STR
-  escape_value VALUE
+  conf::escape_value VALUE
+  conf::kname_is_match KEYFULLNAME PATTERN _M
+  conf::kname_switch KEYFULLNAME {PATTERN BODY ?PATTERN BODY ...?}
 
 
 DESCRIPTION
@@ -68,6 +70,21 @@ DESCRIPTION
 
   escape_value command returns an escaped form(according to conf syntax
   rules) of specified value.
+
+  kname_is_match and kname_switch procs are made to simplify the callback
+  code.
+
+  kname_is_match checks whether kname matches the pattern. Pattern is a
+  list with key name parts (like a kname) that can contain a variable
+  name (prefixed with #) instead of name part where corresponding
+  key name part is saved. E.g. key {users admin name} is match to pattern
+  {users #uid name}; the string "admin" is saved into uid key of the dict
+  which name is specified in _m argument.
+
+  kname_switch is like a switch statement. It evaluate specified script
+  for matched kname. Each pattern is the same key name pattern as for
+  kname_is_match proc. "-" as body and "default" as last pattern have
+  the same bahaviour as in switch statement.
 
 
 CONF SYNTAX
@@ -447,6 +464,7 @@ See ex*.tcl for examples of code:
 - ex3.tcl - ex2.tcl + overwrite checking
 - ex4.sh  - conf_get.tcl use from a shell script
 - ex5.tcl - real config reading example
+- ex6.tcl - kname_switch
 
 
 Errors
