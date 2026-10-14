@@ -1024,5 +1024,5 @@ proc kname_switch {kname branches} {
 
 }
 
-package provide conf 2.1.2
+package provide conf 2.2.0
 
